@@ -56,6 +56,14 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
+# Tutorial Custom
+add_executable( tutorial_custom
+                tutorial_custom/tutorial_custom.cpp
+)
+target_link_libraries( tutorial_custom
+                       ${ALL_LIBS}
+)
+
 # Tutorial 1
 add_executable(tutorial01_first_window 
 	tutorial01_first_window/tutorial01.cpp
