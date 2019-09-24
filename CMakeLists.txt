@@ -57,10 +57,10 @@ add_definitions(
 )
 
 # Tutorial Custom
-add_executable( tutorial_custom
-                tutorial_custom/tutorial_custom.cpp
+add_executable( tutorial00_custom
+				tutorial00_custom/tutorial00_custom.cpp
 )
-target_link_libraries( tutorial_custom
+target_link_libraries( tutorial00_custom
                        ${ALL_LIBS}
 )
 
