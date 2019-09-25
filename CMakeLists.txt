@@ -59,6 +59,10 @@ add_definitions(
 # Tutorial Custom
 add_executable( tutorial00_custom
 				tutorial00_custom/tutorial00_custom.cpp
+				common/shader.cpp
+				common/shader.hpp
+				tutorial00_custom/SimpleFragmentShader.fragmentshader
+				tutorial00_custom/SimpleVertexShader.vertexshader
 )
 target_link_libraries( tutorial00_custom
                        ${ALL_LIBS}
