@@ -3,6 +3,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext.hpp>
+
 #include <common/shader.hpp>
 
 using namespace std;
@@ -45,11 +49,19 @@ int main( void )
 
     GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
+    mat4 model = mat4( 1.f );
+    mat4 view = lookAt( vec3( 1, 1, 1 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
+    mat4 projection = perspective( radians( 90.f ), 1024.f / 768.f, 0.1f, 100.f );
+    mat4 mvp = projection * view * model;
+    GLuint mvpHandle = glGetUniformLocation( programId, "MVP" );
+
     do
     {
         glClear( GL_COLOR_BUFFER_BIT );
 
         glUseProgram( programId );
+
+        glUniformMatrix4fv( mvpHandle, 1, GL_FALSE, &mvp[0][0] );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vbo );
