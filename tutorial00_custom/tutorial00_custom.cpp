@@ -69,6 +69,9 @@ int main( void )
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
+    // sampler in a program represents a single texture of a particular texture type.
+    // The type of the sampler corresponds to the type of the texture that can be used by that sampler.
+    // 셰이더에서 texture에 접근할 수 있게하는 매개변수
     GLuint sampler = glGetUniformLocation( programId, "sampler" );
 
     glEnable( GL_CULL_FACE );
@@ -91,7 +94,8 @@ int main( void )
         glUniformMatrix4fv( mvpHandle, 1, GL_FALSE, &MVP[0][0] );
 
         glBindTexture( GL_TEXTURE_2D, textureId );
-        glUniform1i( sampler, 0 );
+        glActiveTexture( GL_TEXTURE0 );
+        glUniform1i( sampler, 0 ); // glsl에서 sampler가 0번째 texture에 접근할 수 있도록 한다.
 
         glEnableVertexAttribArray( 0 );
         glEnableVertexAttribArray( 1 );
