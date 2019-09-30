@@ -5,6 +5,9 @@
 #include <glm/ext.hpp>
 #include <common/shader.hpp>
 #include <common/BmpLoader.hpp>
+#include <common/controls.hpp>
+
+GLFWwindow *window;
 
 using namespace std;
 using namespace glm;
@@ -23,7 +26,7 @@ int main( void )
     glfwWindowHint( GLFW_SAMPLES, 4 );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
-    GLFWwindow *window = glfwCreateWindow( 1024, 768, "tutorial00", nullptr, nullptr );
+    window = glfwCreateWindow( 1024, 768, "tutorial00", nullptr, nullptr );
     glfwSetInputMode( window, GLFW_STICKY_KEYS, GL_TRUE );
     glfwMakeContextCurrent( window );
 
