@@ -13,7 +13,7 @@ using namespace std;
 class BmpLoader
 {
 public:
-    static vector<unsigned int> loadBmp( string imagePath );
+    static vector<unsigned char> loadBmp( string imagePath );
 };
 
 
