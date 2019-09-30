@@ -26,9 +26,14 @@ int main( void )
     glfwWindowHint( GLFW_SAMPLES, 4 );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
+
     window = glfwCreateWindow( 1024, 768, "tutorial00", nullptr, nullptr );
-    glfwSetInputMode( window, GLFW_STICKY_KEYS, GL_TRUE );
     glfwMakeContextCurrent( window );
+
+    glfwSetInputMode( window, GLFW_STICKY_KEYS, GL_TRUE );
+    glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+    glfwPollEvents();
+    glfwSetCursorPos( window, 1024 / 2, 768 / 2 );
 
     glewExperimental = GL_TRUE;
     if( glewInit() != GLEW_OK )
@@ -54,12 +59,6 @@ int main( void )
     glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
     glBufferData( GL_ARRAY_BUFFER, sizeof( g_uv_buffer_data ), g_uv_buffer_data, GL_STATIC_DRAW );
 
-    mat4 model = mat4( 1.f );
-    mat4 view = lookAt( vec3( 5, 5, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
-    mat4 projection = perspective( radians( 90.f ), 1024.f / 768.f, 0.1f, 100.f );
-    mat4 mvp = projection * view * model;
-    GLuint mvpHandle = glGetUniformLocation( programId, "MVP" );
-
     vector<unsigned char> image = BmpLoader::loadBmp( "../tutorial00_custom/input.bmp" );
     GLuint textureId;
     glGenTextures( 1, &textureId );
@@ -72,13 +71,24 @@ int main( void )
 
     GLuint sampler = glGetUniformLocation( programId, "sampler" );
 
+    glEnable( GL_CULL_FACE );
+
+    glEnable( GL_DEPTH_TEST );
+    glDepthFunc( GL_LESS );
+
     do
     {
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programId );
 
-        glUniformMatrix4fv( mvpHandle, 1, GL_FALSE, &mvp[0][0] );
+        computeMatricesFromInputs();
+        glm::mat4 ProjectionMatrix = getProjectionMatrix();
+        glm::mat4 ViewMatrix = getViewMatrix();
+        glm::mat4 ModelMatrix = glm::mat4( 1.0 );
+        glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+        GLuint mvpHandle = glGetUniformLocation( programId, "MVP" );
+        glUniformMatrix4fv( mvpHandle, 1, GL_FALSE, &MVP[0][0] );
 
         glBindTexture( GL_TEXTURE_2D, textureId );
         glUniform1i( sampler, 0 );
