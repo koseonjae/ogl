@@ -1,11 +1,11 @@
 #version 330 core
 
 in vec2 uv;
-out vec3 color;
+out vec3 fragColor;
 
-uniform sampler2D sampler; // 0번째 texture unit에 접근
+uniform sampler2D sampler;
 
-void main( void )
+void main(void)
 {
-    color = texture(sampler, uv).rgb;
+    fragColor = texture(sampler, uv).rgb;
 }
