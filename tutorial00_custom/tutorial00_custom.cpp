@@ -30,6 +30,9 @@ int main( void )
     window = glfwCreateWindow( 1024, 768, "tutorial00", nullptr, nullptr );
     glfwMakeContextCurrent( window );
     glfwSetInputMode( window, GLFW_STICKY_KEYS, GL_TRUE );
+    glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+    glfwPollEvents();
+    glfwSetCursorPos( window, 1024 / 2, 768 / 2 );
 
     // GLEW
 
@@ -40,6 +43,8 @@ int main( void )
     }
 
     // GL
+
+    glEnable(GL_CULL_FACE);
 
     GLuint programId, vao, vbo, uv, mvpLocation, samplerLocation, textureId;
 
@@ -57,10 +62,6 @@ int main( void )
     glBufferData( GL_ARRAY_BUFFER, sizeof( g_uv_buffer_data ), g_uv_buffer_data, GL_STATIC_DRAW );
 
     mvpLocation = glGetUniformLocation( programId, "MVP" );
-    mat4 model = mat4( 1.f );
-    mat4 view = lookAt( vec3( 5, 5, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
-    mat4 projection = perspective( radians( 90.f ), ( GLfloat ) 1024 / ( GLfloat ) 768, 0.1f, 100.f );
-    mat4 mvp = projection * view * model;
 
     samplerLocation = glGetUniformLocation( programId, "sampler" );
 
@@ -80,6 +81,12 @@ int main( void )
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programId );
+
+        computeMatricesFromInputs();
+        glm::mat4 ProjectionMatrix = getProjectionMatrix();
+        glm::mat4 ViewMatrix = getViewMatrix();
+        glm::mat4 ModelMatrix = glm::mat4( 1.0 );
+        glm::mat4 mvp = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
 
