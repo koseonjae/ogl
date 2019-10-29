@@ -67,6 +67,10 @@ add_executable( tutorial00_custom
 				common/BmpLoader.hpp
 				common/controls.cpp
 				common/controls.hpp
+				common/texture.cpp
+				common/texture.hpp
+				common/objloader.cpp
+				common/objloader.hpp
 				tutorial00_custom/SimpleFragmentShader.fragmentshader
 				tutorial00_custom/SimpleVertexShader.vertexshader
 )
