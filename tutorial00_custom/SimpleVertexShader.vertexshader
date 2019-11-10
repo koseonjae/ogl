@@ -1,14 +1,33 @@
 #version 330 core
 
-layout(location = 0) in vec3 vertexPosition;
+layout(location = 0) in vec3 vertexPosition_model;
 layout(location = 1) in vec2 vertexUV;
+layout(location = 2) in vec3 vertexNormal_model;
 
 uniform mat4 MVP;
+uniform mat4 M;
+uniform mat4 V;
+uniform vec3 lightPosition_world;
 
 out vec2 uv;
 
+out float distance;
+out vec3 lightDirection_camera;
+out vec3 eyeDirection_camera;
+out vec3 normalDirection_camera;
+
 void main( void )
 {
-    gl_Position = MVP * vec4(vertexPosition, 1);
+    gl_Position = MVP * vec4(vertexPosition_model, 1);
+
     uv = vertexUV;
+
+    distance = length(lightPosition_world - (M * vec4(vertexPosition_model, 1)).xyz);
+
+    normalDirection_camera = (V * M * vec4(vertexNormal_model, 0)).xyz;
+
+    vec3 vertexPosition_camera = (V * M * vec4(vertexPosition_model, 1)).xyz;
+    eyeDirection_camera = vec3(0, 0, 0) - vertexPosition_camera;
+
+    lightDirection_camera = (V * vec4(lightPosition_world, 1)).xyz + eyeDirection_camera;
 }

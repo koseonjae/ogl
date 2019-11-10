@@ -49,16 +49,16 @@ int main( void )
     glEnable( GL_CULL_FACE );
     glDepthFunc( GL_LESS );
 
-    GLuint programId, vao, vbo, uvo, mvpLocation, samplerLocation, textureId;
+    GLuint programId, vao, vbo, uvo, normalsVertexObject, mvpLocation, mLocation, vLocation, samplerLocation, textureId, lightLocation;
 
     programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
-    textureId = loadDDS( "../tutorial07_model_loading/uvmap.DDS" );
+    textureId = loadDDS( "../tutorial08_basic_shading/uvmap.DDS" );
 
     vector<vec3> vertices;
     vector<vec2> uvs;
     vector<vec3> normals;
-    bool result = loadOBJ( "../tutorial07_model_loading/cube.obj", vertices, uvs, normals );
+    bool result = loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
     assert( result );
 
     glGenVertexArrays( 1, &vao );
@@ -72,9 +72,18 @@ int main( void )
     glBindBuffer( GL_ARRAY_BUFFER, uvo );
     glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
 
+    glGenBuffers( 1, &normalsVertexObject );
+    glBindBuffer( GL_ARRAY_BUFFER, normalsVertexObject );
+    glBufferData( GL_ARRAY_BUFFER, normals.size() * sizeof( vec3 ), normals.data(), GL_STATIC_DRAW );
+
     mvpLocation = glGetUniformLocation( programId, "MVP" );
+    mLocation = glGetUniformLocation( programId, "M" );
+    vLocation = glGetUniformLocation( programId, "V" );
 
     samplerLocation = glGetUniformLocation( programId, "sampler" );
+
+    vec3 lightPosition = vec3( 4, 4, 4 );
+    lightLocation = glGetUniformLocation( programId, "lightPosition_world" );
 
     // EVENTS
 
@@ -88,12 +97,16 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, textureId );
         glUniform1i( samplerLocation, 0 );
 
+        glUniform3f( lightLocation, lightPosition.x, lightPosition.y, lightPosition.z );
+
         computeMatricesFromInputs();
         mat4 model = mat4( 1.f );
         mat4 view = getViewMatrix();
         mat4 projection = getProjectionMatrix();
         mat4 mvp = projection * view * model;
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
+        glUniformMatrix4fv( mLocation, 1, GL_FALSE, &model[0][0] );
+        glUniformMatrix4fv( vLocation, 1, GL_FALSE, &view[0][0] );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vbo );
@@ -103,10 +116,15 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, uvo );
         glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, 3 * 12 );
+        glEnableVertexAttribArray( 2 );
+        glBindBuffer( GL_ARRAY_BUFFER, normalsVertexObject );
+        glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
+        glDisableVertexAttribArray( 2 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
