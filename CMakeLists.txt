@@ -73,6 +73,8 @@ add_executable( tutorial00_custom
 				common/objloader.hpp
 				common/vboindexer.cpp
 				common/vboindexer.hpp
+				common/text2D.cpp
+				common/text2D.hpp
 				tutorial00_custom/SimpleFragmentShader.fragmentshader
 				tutorial00_custom/SimpleVertexShader.vertexshader
 )

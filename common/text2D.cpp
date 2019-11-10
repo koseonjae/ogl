@@ -18,32 +18,32 @@ unsigned int Text2DUVBufferID;
 unsigned int Text2DShaderID;
 unsigned int Text2DUniformID;
 
-void initText2D(const char * texturePath){
+void initText2D(string prefix, const char * texturePath){
 
 	// Initialize texture
-	Text2DTextureID = loadDDS(texturePath);
+	Text2DTextureID = loadDDS((prefix + texturePath).c_str());
 
 	// Initialize VBO
 	glGenBuffers(1, &Text2DVertexBufferID);
 	glGenBuffers(1, &Text2DUVBufferID);
 
 	// Initialize Shader
-	Text2DShaderID = LoadShaders( "TextVertexShader.vertexshader", "TextVertexShader.fragmentshader" );
+	Text2DShaderID = LoadShaders( "TextVertexShader.vertexshader", "TextVertexShader.fragmentshader", prefix.c_str() );
 
 	// Initialize uniforms' IDs
 	Text2DUniformID = glGetUniformLocation( Text2DShaderID, "myTextureSampler" );
 
 }
 
-void printText2D(const char * text, int x, int y, int size){
+void printText2D(string text, int x, int y, int size){
 
-	unsigned int length = strlen(text);
+	unsigned int length = text.size();
 
 	// Fill buffers
 	std::vector<glm::vec2> vertices;
 	std::vector<glm::vec2> UVs;
 	for ( unsigned int i=0 ; i<length ; i++ ){
-		
+
 		glm::vec2 vertex_up_left    = glm::vec2( x+i*size     , y+size );
 		glm::vec2 vertex_up_right   = glm::vec2( x+i*size+size, y+size );
 		glm::vec2 vertex_down_right = glm::vec2( x+i*size+size, y      );

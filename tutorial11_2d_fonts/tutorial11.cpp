@@ -82,7 +82,7 @@ int main( void )
 	glBindVertexArray(VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
+	GLuint programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader", "../tutorial11_2d_fonts/" );
 
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
@@ -90,7 +90,7 @@ int main( void )
 	GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
 
 	// Load the texture
-	GLuint Texture = loadDDS("uvmap.DDS");
+	GLuint Texture = loadDDS("../tutorial11_2d_fonts/uvmap.DDS");
 	
 	// Get a handle for our "myTextureSampler" uniform
 	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
@@ -99,7 +99,7 @@ int main( void )
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
 	std::vector<glm::vec3> normals;
-	bool res = loadOBJ("suzanne.obj", vertices, uvs, normals);
+	bool res = loadOBJ("../tutorial11_2d_fonts/suzanne.obj", vertices, uvs, normals);
 
 	std::vector<unsigned short> indices;
 	std::vector<glm::vec3> indexed_vertices;
@@ -135,7 +135,7 @@ int main( void )
 	GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
 	// Initialize our little text library with the Holstein font
-	initText2D( "Holstein.DDS" );
+	initText2D( "../tutorial11_2d_fonts/" ,"Holstein.DDS" );
 
 	// For speed computation
 	double lastTime = glfwGetTime();
@@ -232,9 +232,7 @@ int main( void )
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
 
-		char text[256];
-		sprintf(text,"%.2f sec", glfwGetTime() );
-		printText2D(text, 10, 500, 60);
+		printText2D(to_string(glfwGetTime()), 10, 500, 60);
 
 		// Swap buffers
 		glfwSwapBuffers(window);

@@ -8,6 +8,7 @@
 #include <common/objloader.hpp>
 #include <common/texture.hpp>
 #include <common/vboindexer.hpp>
+#include <common/text2D.hpp>
 
 using namespace std;
 using namespace glm;
