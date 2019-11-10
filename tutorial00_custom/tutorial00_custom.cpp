@@ -15,7 +15,7 @@ using namespace glm;
 
 GLFWwindow *window{ nullptr };
 
-int g_width{ 100 }, g_height{ 100 };
+int g_width{ 1024 }, g_height{ 768 };
 
 GLuint textProgramId, textTextureId, textSamplerLocation, textVertexBuffer, textUVBuffer;
 
