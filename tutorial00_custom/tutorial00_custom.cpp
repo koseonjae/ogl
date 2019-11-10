@@ -15,6 +15,8 @@ using namespace glm;
 
 GLFWwindow *window{ nullptr };
 
+int g_width{ 100 }, g_height{ 100 };
+
 GLuint textProgramId, textTextureId, textSamplerLocation, textVertexBuffer, textUVBuffer;
 
 void initText( string vertexShaderPath, string fragShaderPath )
@@ -109,12 +111,12 @@ int main( void )
     glfwWindowHint( GLFW_SAMPLES, 4 );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
-    window = glfwCreateWindow( 1024, 768, "tutorial00", nullptr, nullptr );
+    window = glfwCreateWindow( g_width, g_height, "tutorial00", nullptr, nullptr );
     glfwMakeContextCurrent( window );
     glfwSetInputMode( window, GLFW_STICKY_KEYS, GL_TRUE );
     glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
     glfwPollEvents();
-    glfwSetCursorPos( window, 1024 / 2, 768 / 2 );
+    glfwSetCursorPos( window, g_width / 2, g_height / 2 );
 
     // GLEW
 
@@ -196,7 +198,7 @@ int main( void )
 
         glUniform3f( lightLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
-        computeMatricesFromInputs();
+        computeMatricesFromInputs( g_width, g_height );
         mat4 model = mat4( 1.f );
         mat4 view = getViewMatrix();
         mat4 projection = getProjectionMatrix();
