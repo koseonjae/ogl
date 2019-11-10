@@ -50,11 +50,11 @@ int main( void )
     glEnable( GL_CULL_FACE );
     glDepthFunc( GL_LESS );
 
-    GLuint programId, vao, vbo, uvo, normalsVertexObject, mvpLocation, mLocation, vLocation, samplerLocation, textureId, lightLocation;
+    GLuint programId, vao, elementbuffer, vbo, uvo, normalsVertexObject, mvpLocation, mLocation, vLocation, samplerLocation, textureId, lightLocation;
 
     programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
-    textureId = loadDDS( "../tutorial08_basic_shading/uvmap.DDS" );
+    textureId = loadDDS( "../tutorial09_vbo_indexing/uvmap.DDS" );
 
     vector<vec3> vertices;
     vector<vec2> uvs;
@@ -62,20 +62,30 @@ int main( void )
     bool result = loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
     assert( result );
 
+    std::vector<unsigned short> indices;
+    std::vector<glm::vec3> indexed_vertices;
+    std::vector<glm::vec2> indexed_uvs;
+    std::vector<glm::vec3> indexed_normals;
+    indexVBO( vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals );
+
     glGenVertexArrays( 1, &vao );
     glBindVertexArray( vao );
 
     glGenBuffers( 1, &vbo );
     glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec3 ), vertices.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof( vec3 ), indexed_vertices.data(), GL_STATIC_DRAW );
 
     glGenBuffers( 1, &uvo );
     glBindBuffer( GL_ARRAY_BUFFER, uvo );
-    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof( vec2 ), indexed_uvs.data(), GL_STATIC_DRAW );
 
     glGenBuffers( 1, &normalsVertexObject );
     glBindBuffer( GL_ARRAY_BUFFER, normalsVertexObject );
-    glBufferData( GL_ARRAY_BUFFER, normals.size() * sizeof( vec3 ), normals.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_normals.size() * sizeof( vec3 ), indexed_normals.data(), GL_STATIC_DRAW );
+
+    glGenBuffers( 1, &elementbuffer );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), &indices[0], GL_STATIC_DRAW );
 
     mvpLocation = glGetUniformLocation( programId, "MVP" );
     mLocation = glGetUniformLocation( programId, "M" );
@@ -121,7 +131,8 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, normalsVertexObject );
         glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
+        glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
