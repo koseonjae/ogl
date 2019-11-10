@@ -15,6 +15,87 @@ using namespace glm;
 
 GLFWwindow *window{ nullptr };
 
+GLuint textProgramId, textTextureId, textSamplerLocation, textVertexBuffer, textUVBuffer;
+
+void initText( string vertexShaderPath, string fragShaderPath )
+{
+    textProgramId = LoadShaders( vertexShaderPath.c_str(), fragShaderPath.c_str(), "../tutorial00_custom/" );
+    textTextureId = loadDDS( "../tutorial11_2d_fonts/Holstein.DDS" );
+    textSamplerLocation = glGetUniformLocation( textTextureId, "sampler" );
+
+    glGenBuffers( 1, &textVertexBuffer );
+    glGenBuffers( 1, &textUVBuffer );
+}
+
+void printText( std::string text, int x, int y, int size )
+{
+    unsigned int length = text.size();
+    std::vector<glm::vec2> vertices;
+    std::vector<glm::vec2> uvs;
+    for( unsigned int i = 0; i < length; i++ )
+    {
+        glm::vec2 vertex_up_left = glm::vec2( x + i * size, y + size );
+        glm::vec2 vertex_up_right = glm::vec2( x + i * size + size, y + size );
+        glm::vec2 vertex_down_right = glm::vec2( x + i * size + size, y );
+        glm::vec2 vertex_down_left = glm::vec2( x + i * size, y );
+
+        vertices.push_back( vertex_up_left );
+        vertices.push_back( vertex_down_left );
+        vertices.push_back( vertex_up_right );
+
+        vertices.push_back( vertex_down_right );
+        vertices.push_back( vertex_up_right );
+        vertices.push_back( vertex_down_left );
+
+        char character = text[i];
+        float uv_x = ( character % 16 ) / 16.0f;
+        float uv_y = ( character / 16 ) / 16.0f;
+
+        glm::vec2 uv_up_left = glm::vec2( uv_x, uv_y );
+        glm::vec2 uv_up_right = glm::vec2( uv_x + 1.0f / 16.0f, uv_y );
+        glm::vec2 uv_down_right = glm::vec2( uv_x + 1.0f / 16.0f, ( uv_y + 1.0f / 16.0f ) );
+        glm::vec2 uv_down_left = glm::vec2( uv_x, ( uv_y + 1.0f / 16.0f ) );
+        uvs.push_back( uv_up_left );
+        uvs.push_back( uv_down_left );
+        uvs.push_back( uv_up_right );
+
+        uvs.push_back( uv_down_right );
+        uvs.push_back( uv_up_right );
+        uvs.push_back( uv_down_left );
+    }
+
+    glBindBuffer( GL_ARRAY_BUFFER, textVertexBuffer );
+    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec2 ), vertices.data(), GL_STATIC_DRAW );
+
+    glBindBuffer( GL_ARRAY_BUFFER, textUVBuffer );
+    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
+
+    glUseProgram( textProgramId );
+
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_2D, textTextureId );
+    glUniform1i( textSamplerLocation, 0 );
+
+    glEnableVertexAttribArray( 0 );
+    glBindBuffer( GL_ARRAY_BUFFER, textVertexBuffer );
+    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+    glEnableVertexAttribArray( 1 );
+    glBindBuffer( GL_ARRAY_BUFFER, textUVBuffer );
+    glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    // Draw call
+    glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
+
+    glDisable( GL_BLEND );
+
+    glEnableVertexAttribArray( 0 );
+    glEnableVertexAttribArray( 1 );
+}
+
 int main( void )
 {
     // GLFW
@@ -99,6 +180,8 @@ int main( void )
     vec3 lightPosition = vec3( 4, 4, 4 );
     lightLocation = glGetUniformLocation( programId, "lightPosition_world" );
 
+    initText( "TextVertexShader.vertexshader", "TextFragmentShader.fragmentshader" );
+
     // EVENTS
 
     do
@@ -140,6 +223,8 @@ int main( void )
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
         glDisableVertexAttribArray( 2 );
+
+        printText( to_string( glfwGetTime() ), 10, 500, 60 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();

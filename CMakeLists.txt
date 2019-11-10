@@ -77,6 +77,8 @@ add_executable( tutorial00_custom
 				common/text2D.hpp
 				tutorial00_custom/SimpleFragmentShader.fragmentshader
 				tutorial00_custom/SimpleVertexShader.vertexshader
+				tutorial00_custom/TextVertexShader.vertexshader
+				tutorial00_custom/TextFragmentShader.fragmentshader
 )
 target_link_libraries( tutorial00_custom
                        ${ALL_LIBS}
