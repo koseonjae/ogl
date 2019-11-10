@@ -7,6 +7,7 @@
 #include <common/BmpLoader.hpp>
 #include <common/objloader.hpp>
 #include <common/texture.hpp>
+#include <common/vboindexer.hpp>
 
 using namespace std;
 using namespace glm;
