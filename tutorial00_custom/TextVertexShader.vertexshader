@@ -1,15 +1,13 @@
 #version 330 core
 
-layout(location = 0) in vec2 vertexPosition_screenspace;
+layout(location = 0) in vec2 vertexPosition_screen;
 layout(location = 1) in vec2 vertexUV;
 
 out vec2 uv;
 
 void main( void )
 {
-    vec2 vertexPosition_homoneneousspace = vertexPosition_screenspace - vec2(400,300); // [0..800][0..600] -> [-400..400][-300..300]
-    vertexPosition_homoneneousspace /= vec2(400,300);
-    gl_Position =  vec4(vertexPosition_homoneneousspace,0,1);
-
+    vec2 homo_position = vertexPosition_screen - vec2(400, 300);
+    gl_Position = vec4(homo_position / vec2(400, 300), 0, 1);
     uv = vertexUV;
 }
