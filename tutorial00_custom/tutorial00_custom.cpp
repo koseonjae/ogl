@@ -47,7 +47,9 @@ int main( void )
     glClearColor( 0, 0, 0, 0 );
 
     glEnable( GL_DEPTH_TEST );
-    glEnable( GL_CULL_FACE );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glDisable( GL_CULL_FACE );
     glDepthFunc( GL_LESS );
 
     GLuint programId, vao, elementbuffer, vbo, uvo, normalsVertexObject, mvpLocation, mLocation, vLocation, samplerLocation, textureId, lightLocation;
