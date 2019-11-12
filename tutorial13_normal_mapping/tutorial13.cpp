@@ -83,7 +83,7 @@ int main( void )
 	glBindVertexArray(VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "NormalMapping.vertexshader", "NormalMapping.fragmentshader" );
+	GLuint programID = LoadShaders( "NormalMapping.vertexshader", "NormalMapping.fragmentshader", "../tutorial13_normal_mapping/" );
 
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
@@ -92,9 +92,9 @@ int main( void )
 	GLuint ModelView3x3MatrixID = glGetUniformLocation(programID, "MV3x3");
 
 	// Load the texture
-	GLuint DiffuseTexture = loadDDS("diffuse.DDS");
-	GLuint NormalTexture = loadBMP_custom("normal.bmp");
-	GLuint SpecularTexture = loadDDS("specular.DDS");
+	GLuint DiffuseTexture = loadDDS("../tutorial13_normal_mapping/diffuse.DDS");
+	GLuint NormalTexture = loadBMP_custom("../tutorial13_normal_mapping/normal.bmp");
+	GLuint SpecularTexture = loadDDS("../tutorial13_normal_mapping/specular.DDS");
 	
 	// Get a handle for our "myTextureSampler" uniform
 	GLuint DiffuseTextureID  = glGetUniformLocation(programID, "DiffuseTextureSampler");
@@ -105,7 +105,7 @@ int main( void )
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
 	std::vector<glm::vec3> normals;
-	bool res = loadOBJ("cylinder.obj", vertices, uvs, normals);
+	bool res = loadOBJ("../tutorial13_normal_mapping/cylinder.obj", vertices, uvs, normals);
 
 	std::vector<glm::vec3> tangents;
 	std::vector<glm::vec3> bitangents;
