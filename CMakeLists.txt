@@ -75,6 +75,8 @@ add_executable( tutorial00_custom
 				common/vboindexer.hpp
 				common/text2D.cpp
 				common/text2D.hpp
+				common/tangentspace.cpp
+				common/tangentspace.hpp
 				tutorial00_custom/SimpleFragmentShader.fragmentshader
 				tutorial00_custom/SimpleVertexShader.vertexshader
 				tutorial00_custom/TextVertexShader.vertexshader

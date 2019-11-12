@@ -8,6 +8,7 @@
 #include <common/objloader.hpp>
 #include <common/texture.hpp>
 #include <common/vboindexer.hpp>
+#include <common/tangentspace.hpp>
 
 using namespace std;
 using namespace glm;
@@ -141,19 +142,27 @@ int main( void )
 
     GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
-    GLuint diffuseTextureId = loadDDS( "../tutorial09_vbo_indexing/uvmap.DDS" );
+    GLuint diffuseTextureId = loadDDS( "../tutorial13_normal_mapping/diffuse.DDS" );
+    GLuint specularTextureId = loadDDS( "../tutorial13_normal_mapping/specular.DDS" );
+    GLuint normalTextureId = loadBMP_custom( "../tutorial13_normal_mapping/normal.bmp" );
 
     vector<vec3> vertices;
     vector<vec2> uvs;
     vector<vec3> normals;
-    bool result = loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
+    bool result = loadOBJ( "../tutorial13_normal_mapping/cylinder.obj", vertices, uvs, normals );
     assert( result );
+
+    vector<vec3> tangents;
+    vector<vec3> bitangents;
+    computeTangentBasis( vertices, uvs, normals, tangents, bitangents );
 
     std::vector<unsigned short> indices;
     std::vector<glm::vec3> indexed_vertices;
     std::vector<glm::vec2> indexed_uvs;
     std::vector<glm::vec3> indexed_normals;
-    indexVBO( vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals );
+    std::vector<glm::vec3> indexed_tangents;
+    std::vector<glm::vec3> indexed_bitangents;
+    indexVBO_TBN( vertices, uvs, normals, tangents, bitangents, indices, indexed_vertices, indexed_uvs, indexed_normals, indexed_tangents, indexed_bitangents );
 
     GLuint vertexArray;
     glGenVertexArrays( 1, &vertexArray );
@@ -174,15 +183,28 @@ int main( void )
     glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
     glBufferData( GL_ARRAY_BUFFER, indexed_normals.size() * sizeof( vec3 ), indexed_normals.data(), GL_STATIC_DRAW );
 
+    GLuint tangentBuffer;
+    glGenBuffers( 1, &tangentBuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, tangentBuffer );
+    glBufferData( GL_ARRAY_BUFFER, indexed_tangents.size() * sizeof( vec3 ), indexed_tangents.data(), GL_STATIC_DRAW );
+
+    GLuint bitangentBuffer;
+    glGenBuffers( 1, &bitangentBuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, bitangentBuffer );
+    glBufferData( GL_ARRAY_BUFFER, indexed_bitangents.size() * sizeof( vec3 ), indexed_bitangents.data(), GL_STATIC_DRAW );
+
     GLuint elementbuffer;
     glGenBuffers( 1, &elementbuffer );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), &indices[0], GL_STATIC_DRAW );
 
     GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
+    GLuint mv3x3Location = glGetUniformLocation( programId, "MV3x3" );
     GLuint mLocation = glGetUniformLocation( programId, "M" );
     GLuint vLocation = glGetUniformLocation( programId, "V" );
     GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
+    GLuint specularSamplerLocation = glGetUniformLocation( programId, "specularSampler" );
+    GLuint normalSamplerLocation = glGetUniformLocation( programId, "normalSampler" );
     GLuint lightLocation = glGetUniformLocation( programId, "lightPosition_world" );
 
     initText( "TextVertexShader.vertexshader", "TextFragmentShader.fragmentshader" );
@@ -200,16 +222,26 @@ int main( void )
         mat4 view = getViewMatrix();
         mat4 projection = getProjectionMatrix();
         mat4 mvp = projection * view * model;
+        mat3 mv3x3 = mat3(view * model);
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
         glUniformMatrix4fv( mLocation, 1, GL_FALSE, &model[0][0] );
         glUniformMatrix4fv( vLocation, 1, GL_FALSE, &view[0][0] );
+        glUniformMatrix3fv( mv3x3Location, 1, GL_FALSE, &mv3x3[0][0] );
 
-        vec3 lightPosition = vec3( 4, 4, 4 );
+        vec3 lightPosition = vec3( 0, 0, 4 );
         glUniform3f( lightLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
         glActiveTexture( GL_TEXTURE0 );
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseSamplerLocation, 0 );
+
+        glActiveTexture( GL_TEXTURE1 );
+        glBindTexture( GL_TEXTURE_2D, specularTextureId );
+        glUniform1i( specularSamplerLocation, 1 );
+
+        glActiveTexture( GL_TEXTURE2 );
+        glBindTexture( GL_TEXTURE_2D, normalTextureId );
+        glUniform1i( normalSamplerLocation, 2 );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
@@ -223,12 +255,22 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
         glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
+        glEnableVertexAttribArray( 3 );
+        glBindBuffer( GL_ARRAY_BUFFER, tangentBuffer );
+        glVertexAttribPointer( 3, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glEnableVertexAttribArray( 4 );
+        glBindBuffer( GL_ARRAY_BUFFER, bitangentBuffer );
+        glVertexAttribPointer( 4, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
         glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
         glDisableVertexAttribArray( 2 );
+        glDisableVertexAttribArray( 3 );
+        glDisableVertexAttribArray( 4 );
 
         printText( to_string( glfwGetTime() ), 10, 500, 60 );
 
