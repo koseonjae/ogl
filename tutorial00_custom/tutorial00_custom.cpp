@@ -209,11 +209,49 @@ int main( void )
 
     initText( "TextVertexShader.vertexshader", "TextFragmentShader.fragmentshader" );
 
+    // render to texture
+
+    GLuint frameBufferId;
+    glGenFramebuffers( 1, &frameBufferId );
+    glBindFramebuffer( GL_FRAMEBUFFER, frameBufferId );
+
+    GLuint renderedTextureId;
+    glGenTextures( 1, &renderedTextureId );
+    glBindTexture( GL_TEXTURE_2D, renderedTextureId );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, g_width, g_height, 0, GL_BGR, GL_UNSIGNED_BYTE, nullptr );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+
+    glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTextureId, 0 );
+    GLenum drawBuffer{ GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers( 1, &drawBuffer );
+
+    GLuint renderBufferDepthBuffer;
+    glGenRenderbuffers( 1, &renderBufferDepthBuffer );
+    glBindRenderbuffer( GL_RENDERBUFFER, renderBufferDepthBuffer );
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, g_width, g_height );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderBufferDepthBuffer );
+
+    GLuint quad_programId = LoadShaders( "Passthrough.vertexshader", "WobblyTexture.fragmentshader", "../tutorial00_custom/" );
+    GLfloat quad_vertices[]{ -1, 1, 0, -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0 };
+    GLuint renderedTextureLocation = glGetUniformLocation( quad_programId, "renderedTexture" );
+    GLuint timeLocation = glGetUniformLocation( quad_programId, "time" );
+
+    GLuint quad_vertexBuffer;
+    glGenBuffers( 1, &quad_vertexBuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, quad_vertexBuffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( quad_vertices ), quad_vertices, GL_STATIC_DRAW );
+
     // EVENTS
 
     do
     {
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+        glBindFramebuffer( GL_FRAMEBUFFER, frameBufferId );
+        glViewport( 0, 0, g_width, g_height );
 
         glUseProgram( programId );
 
@@ -222,7 +260,7 @@ int main( void )
         mat4 view = getViewMatrix();
         mat4 projection = getProjectionMatrix();
         mat4 mvp = projection * view * model;
-        mat3 mv3x3 = mat3(view * model);
+        mat3 mv3x3 = mat3( view * model );
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
         glUniformMatrix4fv( mLocation, 1, GL_FALSE, &model[0][0] );
         glUniformMatrix4fv( vLocation, 1, GL_FALSE, &view[0][0] );
@@ -273,6 +311,27 @@ int main( void )
         glDisableVertexAttribArray( 4 );
 
         printText( to_string( glfwGetTime() ), 10, 500, 60 );
+
+        // render to texture
+
+        glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+        glViewport( 0, 0, g_width, g_height );
+
+        glUseProgram( quad_programId );
+
+        glActiveTexture( GL_TEXTURE0 );
+        glBindTexture( GL_TEXTURE_2D, renderedTextureId );
+        glUniform1i( renderedTextureLocation, 0 );
+
+        glUniform1f( timeLocation, (glfwGetTime() * 10.f) );
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, quad_vertexBuffer );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glDrawArrays( GL_TRIANGLES, 0, 2 );
+
+        glDisableVertexAttribArray( 0 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
