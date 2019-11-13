@@ -9,7 +9,7 @@ in vec3 normalDirection_camera;
 in vec3 lightDirection_tangent;
 in vec3 eyeDirection_tangent;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor; // color_attachment0 의 texture에 writing
 
 uniform sampler2D diffuseSampler;
 uniform sampler2D specularSampler;

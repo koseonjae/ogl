@@ -16,6 +16,7 @@ using namespace glm;
 GLFWwindow *window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
+int frameBufferWidth, g_frameBufferHeight;
 
 namespace text2d
 {
@@ -122,6 +123,10 @@ int main( void )
     glfwPollEvents();
     glfwSetCursorPos( window, g_width / 2, g_height / 2 );
 
+    frameBufferWidth = g_width;
+    g_frameBufferHeight = g_height;
+    glfwGetFramebufferSize( window, &frameBufferWidth, &g_frameBufferHeight ); // window width, height에 맞는 framebuffer size를 얻어와야
+
     // GLEW
 
     glewExperimental = GL_TRUE;
@@ -218,11 +223,11 @@ int main( void )
     GLuint renderedTextureId;
     glGenTextures( 1, &renderedTextureId );
     glBindTexture( GL_TEXTURE_2D, renderedTextureId );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, g_width, g_height, 0, GL_BGR, GL_UNSIGNED_BYTE, nullptr );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, frameBufferWidth, g_frameBufferHeight, 0, GL_BGR, GL_UNSIGNED_BYTE, nullptr );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ); // clamp나 repeat으로 하면 반대방향으로 넘어감
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ); // GL_CLAMP_TO_EDGE 로하면 넘어가지 않음
 
     glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTextureId, 0 );
     GLenum drawBuffer{ GL_COLOR_ATTACHMENT0 };
@@ -231,8 +236,13 @@ int main( void )
     GLuint renderBufferDepthBuffer;
     glGenRenderbuffers( 1, &renderBufferDepthBuffer );
     glBindRenderbuffer( GL_RENDERBUFFER, renderBufferDepthBuffer );
-    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, g_width, g_height );
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, frameBufferWidth, g_frameBufferHeight );
     glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderBufferDepthBuffer );
+
+    if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
+    {
+        assert( false );
+    }
 
     GLuint quad_programId = LoadShaders( "Passthrough.vertexshader", "WobblyTexture.fragmentshader", "../tutorial00_custom/" );
     GLfloat quad_vertices[]{ -1, 1, 0, -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0 };
@@ -248,10 +258,10 @@ int main( void )
 
     do
     {
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
         glBindFramebuffer( GL_FRAMEBUFFER, frameBufferId );
-        glViewport( 0, 0, g_width, g_height );
+        glViewport( 0, 0, frameBufferWidth, g_frameBufferHeight );
+
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programId );
 
@@ -315,7 +325,9 @@ int main( void )
         // render to texture
 
         glBindFramebuffer( GL_FRAMEBUFFER, 0 );
-        glViewport( 0, 0, g_width, g_height );
+        glViewport( 0, 0, frameBufferWidth, g_frameBufferHeight );
+
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); // framebuffer를 binding한 후 clear를 한번 해줘야함
 
         glUseProgram( quad_programId );
 
@@ -323,13 +335,13 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, renderedTextureId );
         glUniform1i( renderedTextureLocation, 0 );
 
-        glUniform1f( timeLocation, (glfwGetTime() * 10.f) );
+        glUniform1f( timeLocation, ( glfwGetTime() * 10.f ) );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, quad_vertexBuffer );
         glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, 2 );
+        glDrawArrays( GL_TRIANGLES, 0, 6 ); // 2 -> 6 : triangle수가 아닌 vertex count
 
         glDisableVertexAttribArray( 0 );
 
