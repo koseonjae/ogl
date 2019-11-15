@@ -6,6 +6,9 @@
 #include <common/shader.hpp>
 #include <common/BmpLoader.hpp>
 #include <common/controls.hpp>
+#include <common/objloader.hpp>
+#include <common/texture.hpp>
+#include <vector>
 
 using namespace std;
 using namespace glm;
@@ -13,9 +16,6 @@ using namespace glm;
 GLFWwindow *window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
-static const GLfloat g_vertex_buffer_data[] = { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
-static const GLfloat g_uv_buffer_data[] = { 0.000059f, 1.0f - 0.000004f, 0.000103f, 1.0f - 0.336048f, 0.335973f, 1.0f - 0.335903f, 1.000023f, 1.0f - 0.000013f, 0.667979f, 1.0f - 0.335851f, 0.999958f, 1.0f - 0.336064f, 0.667979f, 1.0f - 0.335851f, 0.336024f, 1.0f - 0.671877f, 0.667969f, 1.0f - 0.671889f, 1.000023f, 1.0f - 0.000013f, 0.668104f, 1.0f - 0.000013f, 0.667979f, 1.0f - 0.335851f, 0.000059f, 1.0f - 0.000004f, 0.335973f, 1.0f - 0.335903f, 0.336098f, 1.0f - 0.000071f, 0.667979f, 1.0f - 0.335851f, 0.335973f, 1.0f - 0.335903f, 0.336024f, 1.0f - 0.671877f, 1.000004f, 1.0f - 0.671847f, 0.999958f, 1.0f - 0.336064f, 0.667979f, 1.0f - 0.335851f, 0.668104f, 1.0f - 0.000013f, 0.335973f, 1.0f - 0.335903f, 0.667979f, 1.0f - 0.335851f, 0.335973f, 1.0f - 0.335903f, 0.668104f, 1.0f - 0.000013f, 0.336098f, 1.0f - 0.000071f, 0.000103f, 1.0f - 0.336048f, 0.000004f, 1.0f - 0.671870f, 0.336024f, 1.0f - 0.671877f, 0.000103f, 1.0f - 0.336048f, 0.336024f, 1.0f - 0.671877f, 0.335973f, 1.0f - 0.335903f, 0.667969f, 1.0f - 0.671889f, 1.000004f, 1.0f - 0.671847f, 0.667979f, 1.0f - 0.335851f };
-
 
 int main( void )
 {
@@ -56,27 +56,25 @@ int main( void )
     glGenVertexArrays( 1, &vertexArray );
     glBindVertexArray( vertexArray );
 
+    vector<vec3> vertices;
+    vector<vec2> uvs;
+    vector<vec3> normals;
+    bool load = loadOBJ( "../tutorial07_model_loading/cube.obj", vertices, uvs, normals );
+    assert( load );
+
     GLuint vertexBuffer;
     glGenBuffers( 1, &vertexBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( g_vertex_buffer_data ), g_vertex_buffer_data, GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec3 ), vertices.data(), GL_STATIC_DRAW );
 
     GLuint uvBuffer;
     glGenBuffers( 1, &uvBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( g_uv_buffer_data ), g_uv_buffer_data, GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
 
     GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
 
-    auto image = BmpLoader::loadBmp( "../tutorial00_custom/input.bmp" );
-    GLuint diffuseTextureId;
-    glGenTextures( 1, &diffuseTextureId );
-    glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, 300, 300, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data() );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    GLuint diffuseTextureId = loadDDS( "../tutorial07_model_loading/uvmap.DDS" );
 
     GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
 
@@ -90,7 +88,7 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseSamplerLocation, 0 );
 
-        computeMatricesFromInputs(g_width, g_height);
+        computeMatricesFromInputs( g_width, g_height );
         mat4 model = mat4( 1.f );
         mat4 view = getViewMatrix();
         mat4 projection = getProjectionMatrix();
@@ -106,7 +104,7 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
         glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, sizeof( g_vertex_buffer_data ) / sizeof( GLfloat ) / 3 );
+        glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
