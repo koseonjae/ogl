@@ -2,13 +2,31 @@
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec2 vertexUV;
+layout(location = 2) in vec3 vertexNormal;
 
 uniform mat4 MVP;
+uniform mat4 M;
+uniform mat4 V;
+uniform vec3 lightPosition_world;
 
 out vec2 uv;
+out vec3 normalDirection_camera;
+out vec3 lightDirection_camera;
+out vec3 eyeDirection_camera;
+out float distance;
 
 void main( void )
 {
     gl_Position = MVP * vec4(vertexPosition, 1);
     uv = vertexUV;
+
+    distance = length((M * vec4(vertexPosition, 1)).xyz - lightPosition_world);
+
+    normalDirection_camera = (V * M * vec4(vertexNormal, 0)).xyz; // 여긴 왜 1이 아니고 0이지?
+
+    vec3 vertexPosition_camera = (V * M * vec4(vertexPosition, 1)).xyz;
+
+    eyeDirection_camera = vec3(0, 0, 0) - vertexPosition_camera;
+
+    lightDirection_camera = (V * vec4(lightPosition_world, 1)).xyz + eyeDirection_camera;
 }
