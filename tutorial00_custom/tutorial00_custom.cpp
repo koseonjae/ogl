@@ -55,13 +55,14 @@ void printText( string time, int x, int y, int size )
         vertices.push_back( vertex_down_right );
         vertices.push_back( vertex_up_right );
 
-        int uvX = ( time[i] / 16 ) / 16;
-        int uvY = ( time[i] % 16 ) / 16;
+        const char character = time[i];
+        float uvX = ( character % 16 ) / 16.f;
+        float uvY = ( character / 16 ) / 16.f;
         float uvSize = 1 / 16.f;
 
-        vec2 uv_up_left{ uvX + uvSize, uvY };
+        vec2 uv_up_left{ uvX, uvY };
         vec2 uv_down_left{ uvX, uvY + uvSize };
-        vec2 uv_down_right{ uvX, uvY + uvSize };
+        vec2 uv_down_right{ uvX + uvSize, uvY + uvSize };
         vec2 uv_up_right{ uvX + uvSize, uvY };
 
         uvs.push_back( uv_up_left );
@@ -223,7 +224,7 @@ int main( void )
         glDisableVertexAttribArray( 1 );
         glDisableVertexAttribArray( 2 );
 
-        printText( to_string( glfwGetTime() ), 50, 500, 10 );
+        printText( to_string( glfwGetTime() ), 50, 500, 50 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();

@@ -7,6 +7,7 @@ out vec2 uv;
 
 void main( void )
 {
-    gl_Position = vec4(vertexPosition, 0, 1);
+    vec2 homogenPosition = (vertexPosition - vec2(400, 300)) / vec2(400, 300);
+    gl_Position = vec4(homogenPosition, 0, 1);
     uv = vertexUV;
 }
