@@ -8,6 +8,7 @@
 #include <common/controls.hpp>
 #include <common/objloader.hpp>
 #include <common/texture.hpp>
+#include <common/vboindexer.hpp>
 #include <vector>
 
 using namespace std;
@@ -62,20 +63,31 @@ int main( void )
     bool load = loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
     assert( load );
 
+    vector<unsigned short> indices;
+    vector<vec3> indexed_vertices;
+    vector<vec2> indexed_uvs;
+    vector<vec3> indexed_normals;
+    indexVBO( vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals );
+
+    GLuint indexBuffer;
+    glGenBuffers( 1, &indexBuffer );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, indexBuffer );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
+
     GLuint vertexBuffer;
     glGenBuffers( 1, &vertexBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
-    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec3 ), vertices.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof( vec3 ), indexed_vertices.data(), GL_STATIC_DRAW );
 
     GLuint uvBuffer;
     glGenBuffers( 1, &uvBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
-    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof( vec2 ), indexed_uvs.data(), GL_STATIC_DRAW );
 
     GLuint normalBuffer;
     glGenBuffers( 1, &normalBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
-    glBufferData( GL_ARRAY_BUFFER, normals.size() * sizeof( vec3 ), normals.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_normals.size() * sizeof( vec3 ), indexed_normals.data(), GL_STATIC_DRAW );
 
     GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
     GLuint mLocation = glGetUniformLocation( programId, "M" );
@@ -122,7 +134,7 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
         glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
+        glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
