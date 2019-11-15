@@ -1,9 +1,11 @@
 #version 330 core
 
-in vec3 color;
+in vec2 uv;
 out vec3 fragColor;
+
+uniform sampler2D diffuseSampler;
 
 void main( void )
 {
-    fragColor = color;
+    fragColor = texture(diffuseSampler, uv).rgb;
 }
