@@ -18,6 +18,83 @@ GLFWwindow *window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
 
+namespace text2d
+{
+    GLuint programId, vertexBuffer, uvBuffer, samplerLocation, textureId;
+}
+
+void initText()
+{
+    using namespace text2d;
+    programId = LoadShaders( "TextVertexShader.vertexshader", "TextFragmentShader.fragmentshader", "../tutorial00_custom/" );
+    glGenBuffers( 1, &vertexBuffer );
+    glGenBuffers( 1, &uvBuffer );
+    textureId = loadDDS( "../tutorial11_2d_fonts/Holstein.DDS" );
+    samplerLocation = glGetUniformLocation( programId, "sampler" );
+}
+
+void printText( string time, int x, int y, int size )
+{
+    using namespace text2d;
+
+    int length = time.size();
+    vector<vec2> vertices;
+    vector<vec2> uvs;
+    for( int i = 0; i < length; ++i )
+    {
+        vec2 vertex_up_left{ x + i * size, y + size };
+        vec2 vertex_down_left{ x + i * size, y };
+        vec2 vertex_down_right{ x + i * size + size, y };
+        vec2 vertex_up_right{ x + i * size + size, y + size };
+
+        vertices.push_back( vertex_up_left );
+        vertices.push_back( vertex_down_left );
+        vertices.push_back( vertex_down_right );
+
+        vertices.push_back( vertex_up_left );
+        vertices.push_back( vertex_down_right );
+        vertices.push_back( vertex_up_right );
+
+        int uvX = ( time[i] / 16 ) / 16;
+        int uvY = ( time[i] % 16 ) / 16;
+        float uvSize = 1 / 16.f;
+
+        vec2 uv_up_left{ uvX + uvSize, uvY };
+        vec2 uv_down_left{ uvX, uvY + uvSize };
+        vec2 uv_down_right{ uvX, uvY + uvSize };
+        vec2 uv_up_right{ uvX + uvSize, uvY };
+
+        uvs.push_back( uv_up_left );
+        uvs.push_back( uv_down_left );
+        uvs.push_back( uv_down_right );
+
+        uvs.push_back( uv_up_left );
+        uvs.push_back( uv_down_right );
+        uvs.push_back( uv_up_right );
+    }
+
+    glUseProgram( programId );
+
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_2D, textureId );
+    glUniform1i( samplerLocation, 0 );
+
+    glEnableVertexAttribArray( 0 );
+    glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
+    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec2 ), vertices.data(), GL_STATIC_DRAW );
+    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+    glEnableVertexAttribArray( 1 );
+    glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
+    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
+    glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+    glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
+
+    glDisableVertexAttribArray( 0 );
+    glDisableVertexAttribArray( 1 );
+}
+
 int main( void )
 {
     if( glfwInit() != GL_TRUE )
@@ -103,6 +180,8 @@ int main( void )
 
     GLuint lightPositionLocation = glGetUniformLocation( programId, "lightPosition_world" );
 
+    initText();
+
     do
     {
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -143,6 +222,8 @@ int main( void )
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
         glDisableVertexAttribArray( 2 );
+
+        printText( to_string( glfwGetTime() ), 50, 500, 10 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
