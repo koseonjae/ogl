@@ -1,9 +1,12 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <common/shader.hpp>
 
 using namespace std;
+using namespace glm;
 
 GLFWwindow *window{ nullptr };
 
@@ -47,11 +50,20 @@ int main( void )
     glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
     glBufferData( GL_ARRAY_BUFFER, sizeof( g_triangle ), g_triangle, GL_STATIC_DRAW );
 
+    GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
+
+    mat4 model = mat4( 1.f );
+    mat4 view = lookAt( vec3( 5, 5, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
+    mat4 projection = perspective( radians( 90.f ), ( GLfloat ) g_width / ( GLfloat ) g_height, 0.1f, 100.f );
+    mat4 mvp = projection * view * model;
+
     do
     {
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programId );
+
+        glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
