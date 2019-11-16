@@ -8,7 +8,7 @@ in vec3 lightDirection_tangent;
 in vec3 eyeDirection_tangent;
 in float distance;
 
-out vec3 fragColor;
+out vec4 fragColor;
 
 uniform sampler2D diffuseSampler;
 uniform sampler2D specularSampler;
@@ -31,7 +31,8 @@ void main( void )
     float cosTheta = clamp(dot(n, l), 0, 1);
     float cosAlpha = clamp(dot(v, r), 0, 1);
 
-    fragColor = materialAmbient +
+    fragColor.rgb = materialAmbient +
                 materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
                 materialSpecular * lightPower * lightColor * pow(cosAlpha, 5) / (distance * distance);
+    fragColor.a = 0.5;
 }

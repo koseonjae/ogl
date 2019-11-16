@@ -18,6 +18,7 @@ using namespace glm;
 GLFWwindow *window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
+int framebufferWidth{ 0 }, g_framebufferHeight{ 0 };
 
 namespace text2d
 {
@@ -31,7 +32,7 @@ void initText()
     glGenBuffers( 1, &vertexBuffer );
     glGenBuffers( 1, &uvBuffer );
     textureId = loadDDS( "../tutorial11_2d_fonts/Holstein.DDS" );
-    samplerLocation = glGetUniformLocation( programId, "sampler" );
+    samplerLocation = glGetUniformLocation( programId, "renderedTextureSampler" );
 }
 
 void printText( string time, int x, int y, int size )
@@ -163,6 +164,7 @@ int main( void )
     glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
     glfwPollEvents();
     glfwSetCursorPos( window, g_width / 2, g_height / 2 );
+    glfwGetFramebufferSize( window, &framebufferWidth, &g_framebufferHeight );
 
     glewExperimental = GL_TRUE;
     if( glewInit() != GLEW_OK )
@@ -233,6 +235,11 @@ int main( void )
     glBindBuffer( GL_ARRAY_BUFFER, bitangentBuffer );
     glBufferData( GL_ARRAY_BUFFER, indexed_bitangents.size() * sizeof( vec3 ), indexed_bitangents.data(), GL_STATIC_DRAW );
 
+    GLuint elementbuffer;
+    glGenBuffers( 1, &elementbuffer );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), &indices[0], GL_STATIC_DRAW );
+
     GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
     GLuint mLocation = glGetUniformLocation( programId, "M" );
     GLuint vLocation = glGetUniformLocation( programId, "V" );
@@ -248,13 +255,53 @@ int main( void )
 
     GLuint lightPositionLocation = glGetUniformLocation( programId, "lightPosition_world" );
 
+    GLuint renderedTextureProgramId = LoadShaders( "Passthrough.vertexshader", "WobblyTexture.fragmentshader", "../tutorial00_custom/" );
+
+    GLuint frameBufferId;
+    glGenFramebuffers( 1, &frameBufferId );
+    glBindFramebuffer( GL_FRAMEBUFFER, frameBufferId );
+
+    GLuint renderedTextureId;
+    glGenTextures( 1, &renderedTextureId );
+    glBindTexture( GL_TEXTURE_2D, renderedTextureId );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, framebufferWidth, g_framebufferHeight, 0, GL_BGR, GL_UNSIGNED_BYTE, nullptr );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    GLuint renderedTextureLocation = glGetUniformLocation( renderedTextureProgramId, "sampler" );
+
+    glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTextureId, 0 );
+    GLenum drawBuffer{ GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers( 1, &drawBuffer );
+
+    GLuint depthRenderBuffer;
+    glGenRenderbuffers( 1, &depthRenderBuffer );
+    glBindRenderbuffer( GL_RENDERBUFFER, depthRenderBuffer );
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, framebufferWidth, g_framebufferHeight );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderBuffer );
+
+    if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
+    {
+        assert( false );
+    }
+
+    GLfloat quad_vertices[]{ -1, 1, 0, -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0 };
+    GLuint quadVertexBuffer;
+    glGenBuffers( 1, &quadVertexBuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, quadVertexBuffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( quad_vertices ), quad_vertices, GL_STATIC_DRAW );
+
     initText();
 
     do
     {
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        glBindFramebuffer( GL_FRAMEBUFFER, frameBufferId );
+        glViewport( 0, 0, framebufferWidth, g_framebufferHeight );
 
         glUseProgram( programId );
+
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glActiveTexture( GL_TEXTURE0 );
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
@@ -303,6 +350,7 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, bitangentBuffer );
         glVertexAttribPointer( 4, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
         glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
 
         glDisableVertexAttribArray( 0 );
@@ -311,7 +359,29 @@ int main( void )
         glDisableVertexAttribArray( 3 );
         glDisableVertexAttribArray( 4 );
 
+        // 2d text rendering
+
         printText( to_string( glfwGetTime() ), 50, 500, 50 );
+
+        // draw rendered texture to main frame buffer
+
+        glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+        glViewport( 0, 0, framebufferWidth, g_framebufferHeight );
+        glUseProgram( renderedTextureId );
+
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+        glActiveTexture( GL_TEXTURE0 );
+        glBindTexture( GL_TEXTURE_2D, renderedTextureId );
+        glUniform1i( renderedTextureLocation, 0 );
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, quadVertexBuffer );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+        assert( ( sizeof( quad_vertices ) / sizeof( GLfloat ) / 3 ) == 6 );
+        glDrawArrays( GL_TRIANGLES, 0, sizeof( quad_vertices ) / sizeof( GLfloat ) / 3 );
+
+        glDisableVertexAttribArray( 0 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
