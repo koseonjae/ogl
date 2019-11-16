@@ -23,7 +23,7 @@ void main( void )
     vec3 materialAmbient = materialDiffuse * 0.1;
     vec3 materialSpecular = texture(specularSampler, uv).rgb * vec3(0.3, 0.3, 0.3);
 
-    vec3 n = normalize(texture(normalSampler, uv).rgb * 2 -1);
+    vec3 n = normalize(texture(normalSampler, vec2(uv.x, -uv.y)).rgb * 2 -1);
     vec3 l = normalize(lightDirection_tangent);
     vec3 v = normalize(eyeDirection_tangent);
     vec3 r = reflect(-l, n);
