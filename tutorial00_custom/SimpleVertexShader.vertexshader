@@ -10,7 +10,8 @@ uniform mat4 V;
 uniform vec3 lightPosition_world;
 uniform sampler2D diffuseSampler;
 
-out vec4 color;
+out vec4 frontColor;
+out vec4 backColor;
 
 vec4 phongModel(vec3 n, vec3 l, vec3 v, vec3 r)
 {
@@ -52,5 +53,6 @@ void main( void )
     vec3 v = normalize(eyeDirection_camera);
     vec3 r = reflect(-l, n);
 
-    color = phongModel(n, l, v, r);
+    frontColor = phongModel(n, l, v, r);
+    backColor = phongModel(-n, l, v, r);
 }
