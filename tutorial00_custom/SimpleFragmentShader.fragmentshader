@@ -9,7 +9,7 @@ out vec4 fragColor;
 uniform vec3 lightPosition_camera;
 uniform sampler2D diffuseSampler;
 
-vec4 phongModel(vec3 position, vec3 n)
+vec3 phongModel(vec3 position, vec3 n)
 {
     float distance = length(position - lightPosition_camera);
     vec3 v = normalize(-position);
@@ -25,11 +25,9 @@ vec4 phongModel(vec3 position, vec3 n)
     float cosTheta = clamp(dot(n, l), 0, 1);
     float cosAlpha = clamp(dot(v, r), 0, 1);
 
-    vec4 phongModelColor;
-    phongModelColor.rgb = materialAmbient +
-                          materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
-                          materialSpecular * lightPower * lightColor * pow(cosAlpha, 5) / (distance * distance);
-    phongModelColor.a = 1;
+    vec3 phongModelColor = materialAmbient +
+                           materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
+                           materialSpecular * lightPower * lightColor * pow(cosAlpha, 5) / (distance * distance);
     return phongModelColor;
 }
 
@@ -48,10 +46,10 @@ void main( void )
     
     if( gl_FrontFacing )
     {
-        fragColor = phongModel(vertexPosition_camera, n);
+        fragColor = vec4(phongModel(vertexPosition_camera, n), 1);
     }
     else
     {
-        fragColor = phongModel(vertexPosition_camera, -n);
+        fragColor = vec4(phongModel(vertexPosition_camera, -n), 1);
     }
 }
