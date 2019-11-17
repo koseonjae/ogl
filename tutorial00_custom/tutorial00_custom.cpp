@@ -179,7 +179,7 @@ int main( void )
 
     GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
 
-    GLuint lightPositionLocation = glGetUniformLocation( programId, "lightPosition_world" );
+    GLuint lightPositionLocation = glGetUniformLocation( programId, "lightPosition_camera" );
 
     initText();
 
