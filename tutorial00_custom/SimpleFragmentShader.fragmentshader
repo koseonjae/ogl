@@ -14,7 +14,7 @@ vec3 phongModel(vec3 position, vec3 n)
     float distance = length(position - lightPosition_camera);
     vec3 v = normalize(-position);
     vec3 l = normalize(lightPosition_camera - position);
-    vec3 r = reflect(-l, n);
+    vec3 h = normalize(v + l); // r vector를 위한 reflect보다 연산량을 줄임
 
     float lightPower = 50.f;
     vec3 lightColor = vec3(1, 1, 1);
@@ -23,7 +23,7 @@ vec3 phongModel(vec3 position, vec3 n)
     vec3 materialSpecular = vec3(0.3, 0.3, 0.3);
 
     float cosTheta = clamp(dot(n, l), 0, 1);
-    float cosAlpha = clamp(dot(v, r), 0, 1);
+    float cosAlpha = clamp(dot(h, n), 0, 1);
 
     vec3 phongModelColor = materialAmbient +
                            materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
