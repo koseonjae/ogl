@@ -37,19 +37,5 @@ void main( void )
 
     vec3 n = normalize(normalDirection_camera);
 
-    bvec2 toDiscard = greaterThan(fract(uv * scale), vec2(0.2, 0.2));
-
-    if( all( toDiscard ) )
-    {
-        discard;
-    }
-    
-    if( gl_FrontFacing )
-    {
-        fragColor = vec4(phongModel(vertexPosition_camera, n), 1);
-    }
-    else
-    {
-        fragColor = vec4(phongModel(vertexPosition_camera, -n), 1);
-    }
+    fragColor = vec4(phongModel(vertexPosition_camera, n), 1);
 }
