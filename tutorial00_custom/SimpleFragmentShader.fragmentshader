@@ -6,14 +6,17 @@ in vec2 uv;
 
 out vec4 fragColor;
 
+uniform mat4 V;
 uniform vec3 lightPosition_camera;
 uniform sampler2D diffuseSampler;
 
 vec3 phongModel(vec3 position, vec3 n)
 {
-    float distance = length(position - lightPosition_camera);
+    vec3 lightDirection_camera = lightPosition_camera - position;
+
+    float distance = length(lightDirection_camera);
     vec3 v = normalize(-position);
-    vec3 l = normalize(lightPosition_camera - position);
+    vec3 l = normalize(lightDirection_camera);
     vec3 h = normalize(v + l); // r vector를 위한 reflect보다 연산량을 줄임
 
     float lightPower = 50.f;
