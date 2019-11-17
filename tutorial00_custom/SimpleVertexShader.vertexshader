@@ -8,25 +8,43 @@ uniform mat4 MVP;
 uniform mat4 M;
 uniform mat4 V;
 uniform vec3 lightPosition_world;
+uniform sampler2D diffuseSampler;
 
-out vec2 uv;
-out vec3 normalDirection_camera;
-out vec3 lightDirection_camera;
-out vec3 eyeDirection_camera;
-out float distance;
+out vec4 color;
 
 void main( void )
 {
     gl_Position = MVP * vec4(vertexPosition, 1);
-    uv = vertexUV;
+    vec2 uv = vertexUV;
 
-    distance = length((M * vec4(vertexPosition, 1)).xyz - lightPosition_world);
+    float distance = length((M * vec4(vertexPosition, 1)).xyz - lightPosition_world);
 
-    normalDirection_camera = (V * M * vec4(vertexNormal, 0)).xyz; // 여긴 왜 1이 아니고 0이지?
+    vec3 normalDirection_camera = (V * M * vec4(vertexNormal, 0)).xyz; // 여긴 왜 1이 아니고 0이지?
 
     vec3 vertexPosition_camera = (V * M * vec4(vertexPosition, 1)).xyz;
 
-    eyeDirection_camera = vec3(0, 0, 0) - vertexPosition_camera;
+    vec3 eyeDirection_camera = vec3(0, 0, 0) - vertexPosition_camera;
 
-    lightDirection_camera = (V * vec4(lightPosition_world, 1)).xyz + eyeDirection_camera;
+    vec3 lightDirection_camera = (V * vec4(lightPosition_world, 1)).xyz + eyeDirection_camera;
+
+    // from fs
+
+    float lightPower = 50.f;
+    vec3 lightColor = vec3(1,1,1);
+    vec3 materialDiffuse = texture(diffuseSampler, uv).rgb;
+    vec3 materialAmbient = materialDiffuse * 0.1;
+    vec3 materialSpecular = vec3(0.3, 0.3, 0.3);
+
+    vec3 n = normalize(normalDirection_camera);
+    vec3 l = normalize(lightDirection_camera);
+    vec3 v = normalize(eyeDirection_camera);
+    vec3 r = reflect(-l, n);
+
+    float cosTheta = clamp(dot(n, l), 0, 1);
+    float cosAlpha = clamp(dot(v, r), 0, 1);
+
+    color.rgb = materialAmbient +
+                materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
+                materialSpecular * lightPower * lightColor * pow(cosAlpha, 5) / (distance * distance);
+    color.a = 0.3;
 }
