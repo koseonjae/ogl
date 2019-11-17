@@ -12,6 +12,7 @@ uniform sampler2D diffuseSampler;
 
 out vec4 frontColor;
 out vec4 backColor;
+out vec2 uv;
 
 vec4 phongModel(vec3 n, vec3 l, vec3 v, vec3 r)
 {
@@ -30,13 +31,15 @@ vec4 phongModel(vec3 n, vec3 l, vec3 v, vec3 r)
     phongModelColor.rgb = materialAmbient +
                           materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
                           materialSpecular * lightPower * lightColor * pow(cosAlpha, 5) / (distance * distance);
-    phongModelColor.a = 0.3;
+    phongModelColor.a = 1;
     return phongModelColor;
 }
 
 void main( void )
 {
     gl_Position = MVP * vec4(vertexPosition, 1);
+
+    uv = vertexUV;
 
     vec3 normalDirection_camera = (V * M * vec4(vertexNormal, 0)).xyz; // 여긴 왜 1이 아니고 0이지?
 

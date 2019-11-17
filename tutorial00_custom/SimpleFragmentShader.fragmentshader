@@ -2,9 +2,26 @@
 
 in vec4 frontColor;
 in vec4 backColor;
+in vec2 uv;
 out vec4 fragColor;
 
 void main( void )
 {
-    fragColor = frontColor;
+    float scale = 15.f;
+
+    bvec2 toDiscard = greaterThan(fract(uv * scale), vec2(0.2, 0.2));
+
+    if( all( toDiscard ) )
+    {
+        discard;
+    }
+    
+    if( gl_FrontFacing )
+    {
+        fragColor = frontColor;
+    }
+    else
+    {
+        fragColor = backColor;
+    }
 }
