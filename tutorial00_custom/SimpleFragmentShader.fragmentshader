@@ -29,7 +29,7 @@ vec3 phongModel(vec3 position, vec3 n)
     float cosAlpha = clamp(dot(h, n), 0, 1);
 
     vec3 phongModelColor = materialAmbient +
-                           materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
+                           materialDiffuse * lightPower * lightColor * floor(cosTheta * 3) / (distance * distance) +
                            materialSpecular * lightPower * lightColor * pow(cosAlpha, 5) / (distance * distance);
     return phongModelColor;
 }
