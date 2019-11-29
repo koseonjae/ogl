@@ -77,5 +77,9 @@ int main( void )
         glfwPollEvents();
     } while( glfwGetKey( window, GLFW_KEY_ESCAPE ) != GL_TRUE && !glfwWindowShouldClose( window ) );
 
+    glDeleteBuffers( 1, &vertexBuffer );
+    glDeleteVertexArrays( 1, &vertexArray );
+    glDeleteProgram( programId );
+
     return 0;
 }
