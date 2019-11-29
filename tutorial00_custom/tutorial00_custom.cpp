@@ -57,6 +57,13 @@ int main( void )
 
     GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
+    mat4 model = mat4( 1.f );
+    mat4 view = lookAt( vec3( 5, 5, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
+    mat4 projection = perspective( radians( 90.f ), ( GLfloat ) g_width / ( GLfloat ) g_height, 0.1f, 100.f );
+    mat4 mvp = projection * view * model;
+
+    GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
+
     // GL
 
     do
@@ -64,6 +71,8 @@ int main( void )
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programId );
+
+        glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
