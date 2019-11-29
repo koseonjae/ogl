@@ -24,8 +24,8 @@ void main( void )
     vec3 materialAmbient = materialDiffuse * 0.1;
     vec3 materialSpecular = vec3(0.3, 0.3, 0.3);
 
-    float cosTheta = dot(n, l);
-    float cosAlpha = dot(v, r);
+    float cosTheta = clamp(dot(n, l),0,1);
+    float cosAlpha = clamp(dot(v, r),0,1);
 
     fragColor = materialAmbient +
                 materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +

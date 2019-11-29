@@ -103,7 +103,7 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseSamplerLocation, 0 );
 
-        vec3 lightPosition = vec3( 3, 3, 3 );
+        vec3 lightPosition = vec3( 4,4,4 );
         glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
