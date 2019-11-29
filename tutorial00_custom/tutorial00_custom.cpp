@@ -104,7 +104,7 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
         glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, 3 * vertices.size() );
+        glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
