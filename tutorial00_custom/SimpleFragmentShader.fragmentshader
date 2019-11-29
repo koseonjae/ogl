@@ -2,7 +2,9 @@
 
 layout(location = 0) out vec3 fragColor;
 
+in vec3 color;
+
 void main( void )
 {
-    fragColor = vec3(1,0,0);
+    fragColor = color;
 }
