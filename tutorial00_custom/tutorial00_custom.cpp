@@ -37,9 +37,9 @@ int main( void )
     window = glfwCreateWindow( g_width, g_height, "tutorial00", nullptr, nullptr );
     glfwMakeContextCurrent( window );
     glfwSetInputMode( window, GLFW_STICKY_KEYS, GLFW_KEY_ESCAPE );
-//    glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
-//    glfwPollEvents();
-//    glfwSetCursorPos( window, g_width / 2, g_height / 2 );
+    glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+    glfwPollEvents();
+    glfwSetCursorPos( window, g_width / 2, g_height / 2 );
 
     glewExperimental = GL_TRUE;
     if( glewInit() != GLEW_OK )
@@ -79,11 +79,6 @@ int main( void )
 
     GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
 
-    mat4 model = mat4( 1.f );
-    mat4 view = lookAt( vec3( 5, 5, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
-    mat4 projection = perspective( radians( 90.f ), ( GLfloat ) g_width / ( GLfloat ) g_height, 0.1f, 100.f );
-    mat4 mvp = projection * view * model;
-
     GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
 
     do
@@ -91,6 +86,12 @@ int main( void )
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programId );
+
+        computeMatricesFromInputs(g_width, g_height);
+        mat4 model = mat4( 1.f );
+        mat4 view = getViewMatrix();
+        mat4 projection = getProjectionMatrix();
+        mat4 mvp = projection * view * model;
 
         glActiveTexture( GL_TEXTURE0 );
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
