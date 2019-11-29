@@ -56,13 +56,17 @@ int main( void )
     vector<vec3> vertices;
     vector<vec2> uvs;
     vector<vec3> normals;
-    bool loaded = loadOBJ( "../tutorial07_model_loading/cube.obj", vertices, uvs, normals );
+    bool loaded = loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
     assert( loaded );
-    GLuint diffuseTextureId = loadDDS( "../tutorial07_model_loading/uvmap.DDS" );
+    GLuint diffuseTextureId = loadDDS( "../tutorial08_basic_shading/uvmap.DDS" );
 
     GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
 
     GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
+    GLuint mLocation = glGetUniformLocation( programId, "M" );
+    GLuint vLocation = glGetUniformLocation( programId, "V" );
+
+    GLuint lightPositionLocation = glGetUniformLocation( programId, "lightPosition" );
 
     GLuint vertexArray;
     glGenVertexArrays( 1, &vertexArray );
@@ -77,6 +81,11 @@ int main( void )
     glGenBuffers( 1, &uvBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
     glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
+
+    GLuint normalBuffer;
+    glGenBuffers( 1, &normalBuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
+    glBufferData( GL_ARRAY_BUFFER, normals.size() * sizeof( vec3 ), normals.data(), GL_STATIC_DRAW );
 
     do
     {
@@ -94,7 +103,12 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseSamplerLocation, 0 );
 
+        vec3 lightPosition = vec3( 3, 3, 3 );
+        glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
+
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
+        glUniformMatrix4fv( mLocation, 1, GL_FALSE, &model[0][0] );
+        glUniformMatrix4fv( vLocation, 1, GL_FALSE, &view[0][0] );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
@@ -104,10 +118,15 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
         glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
 
+        glEnableVertexAttribArray( 2 );
+        glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
+        glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
         glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
+        glDisableVertexAttribArray( 2 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
@@ -115,6 +134,7 @@ int main( void )
 
     glDeleteBuffers( 1, &vertexBuffer );
     glDeleteBuffers( 1, &uvBuffer );
+    glDeleteBuffers( 1, &normalBuffer );
     glDeleteVertexArrays( 1, &vertexArray );
     glDeleteTextures( 1, &diffuseTextureId );
     glDeleteProgram( programId );

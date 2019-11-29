@@ -5,8 +5,29 @@ layout(location = 0) out vec3 fragColor;
 uniform sampler2D diffuseSampler;
 
 in vec2 uv;
+in float distance;
+in vec3 normalDirection_camera;
+in vec3 eyeDirection_camera;
+in vec3 lightDirection_camera;
 
 void main( void )
 {
-    fragColor = texture(diffuseSampler, uv).rgb;
+    float lightPower = 50.f;
+    vec3 lightColor = vec3(1, 1, 1);
+
+    vec3 n = normalize(normalDirection_camera);
+    vec3 v = normalize(eyeDirection_camera);
+    vec3 l = normalize(lightDirection_camera);
+    vec3 r = reflect(-l, n);
+
+    vec3 materialDiffuse = texture(diffuseSampler, uv).rgb;
+    vec3 materialAmbient = materialDiffuse * 0.1;
+    vec3 materialSpecular = vec3(0.3, 0.3, 0.3);
+
+    float cosTheta = dot(n, l);
+    float cosAlpha = dot(v, r);
+
+    fragColor = materialAmbient +
+                materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
+                materialSpecular * lightPower * lightColor * pow(cosAlpha, 5) / (distance * distance);
 }
