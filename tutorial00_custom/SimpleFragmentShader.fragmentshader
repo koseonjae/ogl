@@ -2,9 +2,11 @@
 
 layout(location = 0) out vec3 fragColor;
 
-in vec3 color;
+uniform sampler2D diffuseSampler;
+
+in vec2 uv;
 
 void main( void )
 {
-    fragColor = color;
+    fragColor = texture(diffuseSampler, uv).rgb;
 }
