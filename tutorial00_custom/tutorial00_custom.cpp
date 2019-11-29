@@ -51,6 +51,19 @@ int main( void )
 
     glEnable( GL_DEPTH_TEST );
 
+    GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
+
+    vector<vec3> vertices;
+    vector<vec2> uvs;
+    vector<vec3> normals;
+    bool loaded = loadOBJ( "../tutorial07_model_loading/cube.obj", vertices, uvs, normals );
+    assert( loaded );
+    GLuint diffuseTextureId = loadDDS( "../tutorial07_model_loading/uvmap.DDS" );
+
+    GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
+
+    GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
+
     GLuint vertexArray;
     glGenVertexArrays( 1, &vertexArray );
     glBindVertexArray( vertexArray );
@@ -58,28 +71,12 @@ int main( void )
     GLuint vertexBuffer;
     glGenBuffers( 1, &vertexBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( g_vertex_buffer_data ), g_vertex_buffer_data, GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec3 ), vertices.data(), GL_STATIC_DRAW );
 
     GLuint uvBuffer;
     glGenBuffers( 1, &uvBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( g_uv_buffer_data ), g_uv_buffer_data, GL_STATIC_DRAW );
-
-    GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
-
-    auto image = BmpLoader::loadBmp( "../tutorial00_custom/input.bmp" );
-    GLuint diffuseTextureId;
-    glGenTextures( 1, &diffuseTextureId );
-    glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, 300, 300, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data() );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-
-    GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
-
-    GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
+    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
 
     do
     {
@@ -87,7 +84,7 @@ int main( void )
 
         glUseProgram( programId );
 
-        computeMatricesFromInputs(g_width, g_height);
+        computeMatricesFromInputs( g_width, g_height );
         mat4 model = mat4( 1.f );
         mat4 view = getViewMatrix();
         mat4 projection = getProjectionMatrix();
@@ -107,7 +104,7 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
         glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, 3 * 12 );
+        glDrawArrays( GL_TRIANGLES, 0, 3 * vertices.size() );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
@@ -119,6 +116,7 @@ int main( void )
     glDeleteBuffers( 1, &vertexBuffer );
     glDeleteBuffers( 1, &uvBuffer );
     glDeleteVertexArrays( 1, &vertexArray );
+    glDeleteTextures( 1, &diffuseTextureId );
     glDeleteProgram( programId );
 
     return 0;
