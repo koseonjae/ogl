@@ -58,6 +58,13 @@ int main( void )
     vector<vec3> normals;
     bool loaded = loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
     assert( loaded );
+
+    std::vector<unsigned short> indices;
+    vector<vec3> indexed_vertices;
+    vector<vec2> indexed_uvs;
+    vector<vec3> indexed_normals;
+    indexVBO( vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals );
+
     GLuint diffuseTextureId = loadDDS( "../tutorial08_basic_shading/uvmap.DDS" );
 
     GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
@@ -75,17 +82,22 @@ int main( void )
     GLuint vertexBuffer;
     glGenBuffers( 1, &vertexBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
-    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec3 ), vertices.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof( vec3 ), indexed_vertices.data(), GL_STATIC_DRAW );
 
     GLuint uvBuffer;
     glGenBuffers( 1, &uvBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
-    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof( vec2 ), indexed_uvs.data(), GL_STATIC_DRAW );
 
     GLuint normalBuffer;
     glGenBuffers( 1, &normalBuffer );
     glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
-    glBufferData( GL_ARRAY_BUFFER, normals.size() * sizeof( vec3 ), normals.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, indexed_normals.size() * sizeof( vec3 ), indexed_normals.data(), GL_STATIC_DRAW );
+
+    GLuint elementBuffer;
+    glGenBuffers( 1, &elementBuffer );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementBuffer );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
 
     do
     {
@@ -103,7 +115,7 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseSamplerLocation, 0 );
 
-        vec3 lightPosition = vec3( 4,4,4 );
+        vec3 lightPosition = vec3( 4, 4, 4 );
         glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &mvp[0][0] );
@@ -122,7 +134,8 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
         glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementBuffer );
+        glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
