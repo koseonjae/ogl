@@ -19,8 +19,92 @@ GLFWwindow *window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
 
-static const GLfloat g_vertex_buffer_data[] = { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
-static const GLfloat g_uv_buffer_data[] = { 0.000059f, 1.0f - 0.000004f, 0.000103f, 1.0f - 0.336048f, 0.335973f, 1.0f - 0.335903f, 1.000023f, 1.0f - 0.000013f, 0.667979f, 1.0f - 0.335851f, 0.999958f, 1.0f - 0.336064f, 0.667979f, 1.0f - 0.335851f, 0.336024f, 1.0f - 0.671877f, 0.667969f, 1.0f - 0.671889f, 1.000023f, 1.0f - 0.000013f, 0.668104f, 1.0f - 0.000013f, 0.667979f, 1.0f - 0.335851f, 0.000059f, 1.0f - 0.000004f, 0.335973f, 1.0f - 0.335903f, 0.336098f, 1.0f - 0.000071f, 0.667979f, 1.0f - 0.335851f, 0.335973f, 1.0f - 0.335903f, 0.336024f, 1.0f - 0.671877f, 1.000004f, 1.0f - 0.671847f, 0.999958f, 1.0f - 0.336064f, 0.667979f, 1.0f - 0.335851f, 0.668104f, 1.0f - 0.000013f, 0.335973f, 1.0f - 0.335903f, 0.667979f, 1.0f - 0.335851f, 0.335973f, 1.0f - 0.335903f, 0.668104f, 1.0f - 0.000013f, 0.336098f, 1.0f - 0.000071f, 0.000103f, 1.0f - 0.336048f, 0.000004f, 1.0f - 0.671870f, 0.336024f, 1.0f - 0.671877f, 0.000103f, 1.0f - 0.336048f, 0.336024f, 1.0f - 0.671877f, 0.335973f, 1.0f - 0.335903f, 0.667969f, 1.0f - 0.671889f, 1.000004f, 1.0f - 0.671847f, 0.667979f, 1.0f - 0.335851f };
+namespace text2D
+{
+    GLuint programId, textureId, diffuseSamplerLocation, vertexBuffer, uvBuffer;
+}
+
+void initializeCustomText2D()
+{
+    using namespace text2D;
+
+    programId = LoadShaders( "TextVertexShader.vertexshader", "TextFragmentShader.fragmentshader", "../tutorial00_custom/" );
+
+    textureId = loadDDS( "../tutorial11_2d_fonts/Holstein.DDS" );
+
+    diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
+
+    glGenBuffers( 1, &vertexBuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
+
+    glGenBuffers( 1, &uvBuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
+}
+
+void printCustomText2D( string text, int x, int y, int size )
+{
+    using namespace text2D;
+
+    vector<vec2> vertices;
+    vector<vec2> uvs;
+
+    int length = text.size();
+    for( unsigned int i = 0; i < length; i++ )
+    {
+        glm::vec2 vertex_up_left = glm::vec2( x + i * size, y + size );
+        glm::vec2 vertex_up_right = glm::vec2( x + i * size + size, y + size );
+        glm::vec2 vertex_down_right = glm::vec2( x + i * size + size, y );
+        glm::vec2 vertex_down_left = glm::vec2( x + i * size, y );
+
+        vertices.push_back( vertex_up_left );
+        vertices.push_back( vertex_down_left );
+        vertices.push_back( vertex_up_right );
+
+        vertices.push_back( vertex_down_right );
+        vertices.push_back( vertex_up_right );
+        vertices.push_back( vertex_down_left );
+
+        char character = text[i];
+        float uv_x = ( character % 16 ) / 16.0f;
+        float uv_y = ( character / 16 ) / 16.0f;
+
+        glm::vec2 uv_up_left = glm::vec2( uv_x, uv_y );
+        glm::vec2 uv_up_right = glm::vec2( uv_x + 1.0f / 16.0f, uv_y );
+        glm::vec2 uv_down_right = glm::vec2( uv_x + 1.0f / 16.0f, ( uv_y + 1.0f / 16.0f ) );
+        glm::vec2 uv_down_left = glm::vec2( uv_x, ( uv_y + 1.0f / 16.0f ) );
+        uvs.push_back( uv_up_left );
+        uvs.push_back( uv_down_left );
+        uvs.push_back( uv_up_right );
+
+        uvs.push_back( uv_down_right );
+        uvs.push_back( uv_up_right );
+        uvs.push_back( uv_down_left );
+    }
+
+    glUseProgram( programId );
+
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_2D, textureId );
+    glUniform1i( diffuseSamplerLocation, 0 );
+
+    glEnableVertexAttribArray( 0 );
+    glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
+    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec2 ), vertices.data(), GL_STATIC_DRAW );
+    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+    glEnableVertexAttribArray( 1 );
+    glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
+    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
+    glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+    glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
+
+    glDisableVertexAttribArray( 0 );
+    glDisableVertexAttribArray( 1 );
+}
 
 int main( void )
 {
@@ -50,6 +134,7 @@ int main( void )
     // GL
 
     glEnable( GL_DEPTH_TEST );
+
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
@@ -101,6 +186,8 @@ int main( void )
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementBuffer );
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
 
+    initializeCustomText2D();
+
     do
     {
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -137,11 +224,14 @@ int main( void )
         glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementBuffer );
+
         glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
         glDisableVertexAttribArray( 2 );
+
+        printCustomText2D( to_string( glfwGetTime() ), 10, 10, 50 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
