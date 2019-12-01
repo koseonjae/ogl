@@ -83,9 +83,6 @@ void printCustomText2D( string text, int x, int y, int size )
 
     glUseProgram( programId );
 
-    glEnable( GL_BLEND );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
     glActiveTexture( GL_TEXTURE0 );
     glBindTexture( GL_TEXTURE_2D, textureId );
     glUniform1i( diffuseSamplerLocation, 0 );
@@ -139,6 +136,8 @@ int main( void )
     // GL
 
     glEnable( GL_DEPTH_TEST );
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
 
     GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
@@ -267,12 +266,7 @@ int main( void )
 
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementBuffer );
 
-        glEnable( GL_BLEND );
-        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
         glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
-
-        glDisable( GL_BLEND );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
