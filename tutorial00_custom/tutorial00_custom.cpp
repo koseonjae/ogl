@@ -108,6 +108,51 @@ void printCustomText2D( string text, int x, int y, int size )
     glDisableVertexAttribArray( 1 );
 }
 
+void computeCustomTangentBasis( vector<vec3> &vertices, vector<vec2> &uvs, vector<vec3> &normals, vector<vec3> &tangents, vector<vec3> &bitangents )
+{
+    // prerequisite
+    // uv : tangent space ( texture space에 정의된 좌표 )
+    // normal : tangent space ( teuture space에 정의된 좌표 )
+    // TBN은 회전행렬 -> 역행렬 == 전치행렬
+    int length = vertices.size();
+    for( int i = 0; i < length; ++i )
+    {
+        vec3 edge1 = vertices[3 * i + 1] - vertices[3 * i + 0];
+        vec3 edge2 = vertices[3 * i + 2] - vertices[3 * i + 0];
+        vec2 uv1 = uvs[3 * i + 1] - uvs[3 * i + 0];
+        vec2 uv2 = uvs[3 * i + 2] - uvs[3 * i + 0];
+
+        float r = uv1.x * uv2.y - uv2.x * uv1.y;
+        vec3 tangent = ( uv2.y * edge1 - uv1.y * edge2 ) / r;
+        vec3 bitangent = ( -uv2.x * edge1 + uv1.x * edge2 ) / r;
+
+        tangents.push_back( tangent );
+        tangents.push_back( tangent );
+        tangents.push_back( tangent );
+
+        bitangents.push_back( bitangent );
+        bitangents.push_back( bitangent );
+        bitangents.push_back( bitangent );
+    }
+
+    // See "Going Further"
+    for( unsigned int i = 0; i < vertices.size(); i += 1 )
+    {
+        glm::vec3 &n = normals[i];
+        glm::vec3 &t = tangents[i];
+        glm::vec3 &b = bitangents[i];
+
+        // Gram-Schmidt orthogonalize
+        t = glm::normalize( t - n * glm::dot( n, t ) );
+
+        // Calculate handedness
+        if( glm::dot( glm::cross( n, t ), b ) < 0.0f )
+        {
+            t = t * -1.0f;
+        }
+    }
+}
+
 int main( void )
 {
     if( glfwInit() != GL_TRUE )
@@ -136,8 +181,8 @@ int main( void )
     // GL
 
     glEnable( GL_DEPTH_TEST );
-    glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
+    glDepthFunc( GL_LESS );
+    glEnable( GL_CULL_FACE );
 
     GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
@@ -149,7 +194,7 @@ int main( void )
 
     vector<vec3> tangents;
     vector<vec3> bitangents;
-    computeTangentBasis( vertices, uvs, normals, tangents, bitangents );
+    computeCustomTangentBasis( vertices, uvs, normals, tangents, bitangents );
 
     std::vector<unsigned short> indices;
     vector<vec3> indexed_vertices;
@@ -157,8 +202,7 @@ int main( void )
     vector<vec3> indexed_normals;
     vector<vec3> indexed_tangents;
     vector<vec3> indexed_bitangents;
-    indexVBO_TBN( vertices, uvs, normals, tangents, bitangents,
-            indices, indexed_vertices, indexed_uvs, indexed_normals, indexed_tangents, indexed_bitangents );
+    indexVBO_TBN( vertices, uvs, normals, tangents, bitangents, indices, indexed_vertices, indexed_uvs, indexed_normals, indexed_tangents, indexed_bitangents );
 
     GLuint diffuseTextureId = loadDDS( "../tutorial13_normal_mapping/diffuse.DDS" );
     GLuint specularTextureId = loadDDS( "../tutorial13_normal_mapping/specular.DDS" );
@@ -222,7 +266,7 @@ int main( void )
         mat4 view = getViewMatrix();
         mat4 projection = getProjectionMatrix();
         mat4 mvp = projection * view * model;
-        mat3 mv = mat3(view * model);
+        mat3 mv = mat3( view * model );
 
         glActiveTexture( GL_TEXTURE0 );
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
