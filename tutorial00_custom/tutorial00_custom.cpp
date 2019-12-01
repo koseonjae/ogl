@@ -145,7 +145,7 @@ int main( void )
     vector<vec3> vertices;
     vector<vec2> uvs;
     vector<vec3> normals;
-    bool loaded = loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
+    bool loaded = loadOBJ( "../tutorial13_normal_mapping/cylinder.obj", vertices, uvs, normals );
     assert( loaded );
 
     std::vector<unsigned short> indices;
@@ -154,9 +154,13 @@ int main( void )
     vector<vec3> indexed_normals;
     indexVBO( vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals );
 
-    GLuint diffuseTextureId = loadDDS( "../tutorial08_basic_shading/uvmap.DDS" );
+    GLuint diffuseTextureId = loadDDS( "../tutorial13_normal_mapping/diffuse.DDS" );
+    GLuint specularTextureId = loadDDS( "../tutorial13_normal_mapping/specular.DDS" );
+    GLuint normalTextureId = loadBMP_custom("../tutorial13_normal_mapping/normal.bmp");
 
     GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
+    GLuint specularSamplerLocation = glGetUniformLocation( programId, "specularSampler" );
+    GLuint normalSamplerLocation = glGetUniformLocation( programId, "normalSampler" );
 
     GLuint mvpLocation = glGetUniformLocation( programId, "MVP" );
     GLuint mLocation = glGetUniformLocation( programId, "M" );
@@ -206,6 +210,14 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseSamplerLocation, 0 );
 
+        glActiveTexture( GL_TEXTURE1 );
+        glBindTexture( GL_TEXTURE_2D, specularTextureId );
+        glUniform1i( specularSamplerLocation, 1 );
+
+        glActiveTexture( GL_TEXTURE12 );
+        glBindTexture( GL_TEXTURE_2D, normalTextureId );
+        glUniform1i( normalSamplerLocation, 2 );
+
         vec3 lightPosition = vec3( 4, 4, 4 );
         glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
@@ -244,11 +256,15 @@ int main( void )
         glfwPollEvents();
     } while( glfwGetKey( window, GLFW_KEY_ESCAPE ) != GL_TRUE && !glfwWindowShouldClose( window ) );
 
+    glDeleteBuffers( 1, &text2D::vertexBuffer );
+    glDeleteBuffers( 1, &text2D::uvBuffer );
     glDeleteBuffers( 1, &vertexBuffer );
     glDeleteBuffers( 1, &uvBuffer );
     glDeleteBuffers( 1, &normalBuffer );
     glDeleteVertexArrays( 1, &vertexArray );
     glDeleteTextures( 1, &diffuseTextureId );
+    glDeleteTextures( 1, &specularTextureId );
+    glDeleteTextures( 1, &normalTextureId );
     glDeleteProgram( programId );
 
     return 0;

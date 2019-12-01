@@ -3,6 +3,8 @@
 layout(location = 0) out vec4 fragColor;
 
 uniform sampler2D diffuseSampler;
+uniform sampler2D specularSampler;
+uniform sampler2D normalSampler;
 
 in vec2 uv;
 in float distance;
@@ -15,14 +17,14 @@ void main( void )
     float lightPower = 50.f;
     vec3 lightColor = vec3(1, 1, 1);
 
-    vec3 n = normalize(normalDirection_camera);
+    vec3 n = normalize(texture(normalSampler, uv).rgb);
     vec3 v = normalize(eyeDirection_camera);
     vec3 l = normalize(lightDirection_camera);
     vec3 r = reflect(-l, n);
 
     vec3 materialDiffuse = texture(diffuseSampler, uv).rgb;
     vec3 materialAmbient = materialDiffuse * 0.1;
-    vec3 materialSpecular = vec3(0.3, 0.3, 0.3);
+    vec3 materialSpecular = texture(specularSampler, uv).rgb;
 
     float cosTheta = clamp(dot(n, l),0,1);
     float cosAlpha = clamp(dot(v, r),0,1);
