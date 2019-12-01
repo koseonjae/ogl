@@ -100,7 +100,12 @@ void printCustomText2D( string text, int x, int y, int size )
     glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
     glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
 
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
     glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
+
+    glDisable( GL_BLEND );
 
     glDisableVertexAttribArray( 0 );
     glDisableVertexAttribArray( 1 );
@@ -134,9 +139,6 @@ int main( void )
     // GL
 
     glEnable( GL_DEPTH_TEST );
-
-    glEnable( GL_BLEND );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
@@ -225,7 +227,12 @@ int main( void )
 
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementBuffer );
 
+        glEnable( GL_BLEND );
+        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
         glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
+
+        glDisable( GL_BLEND );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
