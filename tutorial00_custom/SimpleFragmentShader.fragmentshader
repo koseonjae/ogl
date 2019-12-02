@@ -1,10 +1,8 @@
 #version 330 core
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 uniform sampler2D diffuseSampler;
-uniform sampler2D specularSampler;
-uniform sampler2D normalSampler;
 
 in vec2 uv;
 in float distance;
@@ -12,27 +10,25 @@ in vec3 normalDirection_camera;
 in vec3 eyeDirection_camera;
 in vec3 lightDirection_camera;
 
-in vec3 eyeDirection_tangent;
-in vec3 lightDirection_tangent;
-
 void main( void )
 {
     float lightPower = 50.f;
     vec3 lightColor = vec3(1, 1, 1);
 
-    vec3 n = normalize(texture(normalSampler, vec2(uv.x, -uv.y)).rgb * 2 - 1);
-    vec3 v = normalize(eyeDirection_tangent);
-    vec3 l = normalize(lightDirection_tangent);
+    vec3 n = normalize(normalDirection_camera);
+    vec3 v = normalize(eyeDirection_camera);
+    vec3 l = normalize(lightDirection_camera);
     vec3 r = reflect(-l, n);
 
     vec3 materialDiffuse = texture(diffuseSampler, uv).rgb;
     vec3 materialAmbient = materialDiffuse * 0.1;
-    vec3 materialSpecular = texture(specularSampler, uv).rgb * 0.3;
+    vec3 materialSpecular = vec3(0.3, 0.3, 0.3);
 
     float cosTheta = clamp(dot(n, l),0,1);
     float cosAlpha = clamp(dot(v, r),0,1);
 
-    fragColor = materialAmbient +
+    fragColor.rgb = materialAmbient +
                 materialDiffuse * lightPower * lightColor * cosTheta / (distance * distance) +
                 materialSpecular * lightPower * lightColor * pow(cosAlpha, 5) / (distance * distance);
+    fragColor.a = 0.3;
 }
