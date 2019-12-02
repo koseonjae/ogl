@@ -125,6 +125,11 @@ int main( void )
 
     window = glfwCreateWindow( g_width, g_height, "tutorial00", nullptr, nullptr );
     glfwMakeContextCurrent( window );
+
+    int windowWidth = g_width;
+    int windowHeight = g_height;
+    glfwGetFramebufferSize( window, &windowWidth, &windowHeight );
+
     glfwSetInputMode( window, GLFW_STICKY_KEYS, GLFW_KEY_ESCAPE );
     glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
     glfwPollEvents();
@@ -190,8 +195,51 @@ int main( void )
 
     initializeCustomText2D();
 
+    // render to texture
+
+    // program, framebuffer, texture, depthrenderbuffer, quadvertexbuffer, sampler
+
+    GLuint renderedProgramId = LoadShaders( "Passthrough.vertexshader", "WobblyTexture.fragmentshader", "../tutorial00_custom/" );
+
+    GLuint renderedFrameBufferId;
+    glGenFramebuffers( 1, &renderedFrameBufferId );
+    glBindFramebuffer( GL_FRAMEBUFFER, renderedFrameBufferId );
+    // frame buffer 만들때 추가로 할 일이 있나??
+
+    GLuint renderedTextureId;
+    glGenTextures( 1, &renderedTextureId );
+    glBindTexture( GL_TEXTURE_2D, renderedTextureId );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+
+    glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTextureId, 0 );
+    GLenum drawBuffers[]{ GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers( 1, drawBuffers );
+
+    GLuint depthRenderbuffer;
+    glGenRenderbuffers( 1, &depthRenderbuffer );
+    glBindRenderbuffer( GL_RENDERBUFFER, depthRenderbuffer );
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer );
+
+    GLuint renderedTextureSampler = glGetUniformLocation( renderedProgramId, "renderedTextureSampler" );
+    GLuint timeLocation = glGetUniformLocation( renderedProgramId, "time" );
+
+    GLfloat quadVertexBufferData[]{ -1, 1, 0, -1, -1, 0, 1, -1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0 };
+    GLuint quadVertexBuffer;
+    glGenBuffers( 1, &quadVertexBuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, quadVertexBuffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( quadVertexBufferData ), quadVertexBufferData, GL_STATIC_DRAW );
+
     do
     {
+
+        glBindFramebuffer( GL_FRAMEBUFFER, renderedFrameBufferId );
+        glViewport( 0, 0, windowWidth, windowHeight );
+
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programId );
@@ -239,6 +287,27 @@ int main( void )
         glDisableVertexAttribArray( 2 );
 
         printCustomText2D( to_string( glfwGetTime() ), 10, 10, 50 );
+
+        glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+        glViewport( 0, 0, windowWidth, windowHeight );
+
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+        glUseProgram( renderedProgramId );
+
+        glActiveTexture( 0 );
+        glBindTexture( GL_TEXTURE_2D, renderedTextureId );
+        glUniform1i( renderedTextureSampler, 0 );
+
+        glUniform1f( timeLocation, ( float ) ( 10.f * glfwGetTime() ) );
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, quadVertexBuffer );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glDrawArrays( GL_TRIANGLES, 0, 6 );
+
+        glDisableVertexAttribArray( 0 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
