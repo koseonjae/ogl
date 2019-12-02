@@ -125,6 +125,11 @@ int main( void )
 
     window = glfwCreateWindow( g_width, g_height, "tutorial00", nullptr, nullptr );
     glfwMakeContextCurrent( window );
+
+    int windowWidth = 1024;
+    int windowHeight = 768;
+    glfwGetFramebufferSize( window, &windowWidth, &windowHeight );
+
     glfwSetInputMode( window, GLFW_STICKY_KEYS, GLFW_KEY_ESCAPE );
     glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
     glfwPollEvents();
@@ -139,6 +144,9 @@ int main( void )
     // GL
 
     glEnable( GL_DEPTH_TEST );
+    glDepthFunc( GL_LESS );
+
+    glEnable( GL_CULL_FACE );
 
     GLuint programId = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
 
@@ -190,8 +198,54 @@ int main( void )
 
     initializeCustomText2D();
 
+    // ---------------------------------------------
+    // Render to Texture - specific code begins here
+    // ---------------------------------------------
+
+    GLuint FramebufferName = 0;
+    glGenFramebuffers( 1, &FramebufferName );
+    glBindFramebuffer( GL_FRAMEBUFFER, FramebufferName );
+
+    GLuint renderedTextureId;
+    glGenTextures( 1, &renderedTextureId );
+    glBindTexture( GL_TEXTURE_2D, renderedTextureId );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0 );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+
+    glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTextureId, 0 );
+    GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers( 1, drawBuffers );
+
+    GLuint depthRenderBuffer;
+    glGenRenderbuffers( 1, &depthRenderBuffer );
+    glBindRenderbuffer( GL_RENDERBUFFER, depthRenderBuffer );
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderBuffer );
+
+    if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
+    {
+        assert( false );
+    }
+
+    static const GLfloat quadVertexBufferData[] = { -1.0f, -1.0f, 0.0f, 1.0f, -1.0f, 0.0f, -1.0f, 1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 0.0f, };
+
+    GLuint quadVertexbuffer;
+    glGenBuffers( 1, &quadVertexbuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, quadVertexbuffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( quadVertexBufferData ), quadVertexBufferData, GL_STATIC_DRAW );
+
+    GLuint quadProgramId = LoadShaders( "Passthrough.vertexshader", "WobblyTexture.fragmentshader", "../tutorial14_render_to_texture/" );
+    GLuint texID = glGetUniformLocation( quadProgramId, "renderedTexture" );
+    GLuint timeID = glGetUniformLocation( quadProgramId, "time" );
+
     do
     {
+        glBindFramebuffer( GL_FRAMEBUFFER, FramebufferName );
+        glViewport( 0, 0, windowWidth, windowHeight );
+
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programId );
@@ -239,6 +293,27 @@ int main( void )
         glDisableVertexAttribArray( 2 );
 
         printCustomText2D( to_string( glfwGetTime() ), 10, 10, 50 );
+
+        glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+        glViewport( 0, 0, windowWidth, windowHeight );
+
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+        glUseProgram( quadProgramId );
+
+        glActiveTexture( GL_TEXTURE0 );
+        glBindTexture( GL_TEXTURE_2D, renderedTextureId );
+        glUniform1i( texID, 0 );
+
+        glUniform1f( timeID, ( float ) ( glfwGetTime() * 10.0f ) );
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, quadVertexbuffer );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glDrawArrays( GL_TRIANGLES, 0, 6 );
+
+        glDisableVertexAttribArray( 0 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
