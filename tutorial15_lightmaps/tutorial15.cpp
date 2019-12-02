@@ -80,13 +80,13 @@ int main( void )
 	glBindVertexArray(VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShaderLOD.fragmentshader" );
+	GLuint programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShaderLOD.fragmentshader", "../tutorial15_lightmaps/" );
 
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
 	// Load the texture
-	GLuint Texture = loadDDS("lightmap.DDS");
+	GLuint Texture = loadDDS("../tutorial15_lightmaps/lightmap.DDS");
 	
 	// Get a handle for our "myTextureSampler" uniform
 	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
@@ -95,7 +95,7 @@ int main( void )
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
 	std::vector<glm::vec3> normals; // Won't be used at the moment.
-	bool res = loadOBJ("room.obj", vertices, uvs, normals);
+	bool res = loadOBJ("../tutorial15_lightmaps/room.obj", vertices, uvs, normals);
 
 	// Load it into a VBO
 
