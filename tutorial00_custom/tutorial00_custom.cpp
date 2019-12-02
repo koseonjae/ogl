@@ -225,6 +225,11 @@ int main( void )
     glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight );
     glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer );
 
+    if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
+    {
+        assert( false );
+    }
+
     GLuint renderedTextureSampler = glGetUniformLocation( renderedProgramId, "renderedTextureSampler" );
     GLuint timeLocation = glGetUniformLocation( renderedProgramId, "time" );
 
@@ -295,7 +300,7 @@ int main( void )
 
         glUseProgram( renderedProgramId );
 
-        glActiveTexture( 0 );
+        glActiveTexture( GL_TEXTURE0 );
         glBindTexture( GL_TEXTURE_2D, renderedTextureId );
         glUniform1i( renderedTextureSampler, 0 );
 
