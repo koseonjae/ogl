@@ -64,12 +64,12 @@ int main( void )
 	glBindVertexArray(VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader" );
+	GLuint programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader", "../tutorial05_textured_cube/" );
 
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+	// Projection matrix : 45ï¿½ Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
 	// Camera matrix
 	glm::mat4 View       = glm::lookAt(
@@ -84,7 +84,7 @@ int main( void )
 
 	// Load the texture using any two methods
 	//GLuint Texture = loadBMP_custom("uvtemplate.bmp");
-	GLuint Texture = loadDDS("uvtemplate.DDS");
+	GLuint Texture = loadDDS("../tutorial05_textured_cube/uvtemplate.DDS");
 	
 	// Get a handle for our "myTextureSampler" uniform
 	GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
