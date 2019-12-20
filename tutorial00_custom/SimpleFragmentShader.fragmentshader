@@ -1,0 +1,12 @@
+#version 330 core
+
+layout(location = 0) out vec3 fragColor;
+
+uniform sampler2D diffuseSampler;
+
+in vec2 uv;
+
+void main( void )
+{
+    fragColor = texture(diffuseSampler, uv).rgb;
+}
