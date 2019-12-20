@@ -3,9 +3,13 @@
 layout(location = 0) out vec3 fragColor;
 
 uniform sampler2D diffuseSampler;
+uniform sampler2DShadow shadowSampler;
 
 in vec2 uv;
+in vec4 ShadowCoord;
 
 void main( void ) {
-    fragColor = texture(diffuseSampler, uv).rgb;
+    float visibility = texture( shadowSampler, vec3(ShadowCoord.xy, (ShadowCoord.z)/ShadowCoord.w) );
+    vec3 diffuseColor = texture(diffuseSampler, uv).rgb;
+    fragColor = visibility * diffuseColor;
 }
