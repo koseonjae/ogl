@@ -101,13 +101,59 @@ int main( void )
 
     GLuint diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
 
+    // -----------------------
+    // shadow mapping variable
+    // -----------------------
+
+    GLuint depthProgramId = LoadShaders( "Depth.vertexshader", "Depth.fragmentshader", "../tutorial00_custom/" );
+
+    GLuint depthFramebufferId;
+    glGenFramebuffers( 1, &depthFramebufferId );
+    glBindFramebuffer( GL_FRAMEBUFFER, depthFramebufferId );
+
+    GLuint depthTextureId;
+    glGenTextures( 1, &depthTextureId );
+    glBindTexture( GL_TEXTURE_2D, depthTextureId );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
+
+    glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTextureId, 0 );
+
+    glDrawBuffer( GL_NONE );
+
+    GLuint depthMVPLocation = glGetUniformLocation( depthProgramId, "DepthMVP" );
+    GLuint depthSamplerLocation = glGetUniformLocation( programId, "shadowSampler" );
+    GLuint depthBiasMVPLocation = glGetUniformLocation( programId, "DepthBiasMVP" );
+
+    glm::mat4 biasMatrix( 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0 );
+
     do
     {
         // -----------------
         // depth frame buffer
         // -----------------
 
-        // note: later
+        glBindFramebuffer( GL_FRAMEBUFFER, depthFramebufferId );
+
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+        glUseProgram( depthProgramId );
+
+        vec3 lightInvDir = vec3( 0.5, 2, 2 );
+        mat4 lightModel = mat4( 1.f );
+        mat4 lightView = lookAt( lightInvDir, vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
+        mat4 lightProjection = ortho<float>( -10, 10, -10, 10, -10, 20 );
+
+        mat4 depthMVP = lightProjection * lightView * lightModel;
+        mat4 depthBiaseMVP = biasMatrix * depthMVP;
+
+        glUniformMatrix4fv( depthMVPLocation, 1, GL_FALSE, &depthMVP[0][0] );
+        glUniformMatrix4fv( depthBiasMVPLocation, 1, GL_FALSE, &depthBiaseMVP[0][0] );
 
         // -----------------
         // main frame buffer
@@ -129,6 +175,10 @@ int main( void )
         glActiveTexture( GL_TEXTURE0 );
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseSamplerLocation, 0 );
+
+        glActiveTexture( GL_TEXTURE1 );
+        glBindTexture( GL_TEXTURE_2D, depthTextureId );
+        glUniform1i( depthSamplerLocation, 1 );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
