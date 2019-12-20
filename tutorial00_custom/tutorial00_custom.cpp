@@ -19,6 +19,8 @@ GLFWwindow *window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
 
+GLfloat g_triangle[]{ -1, -1, 0, 1, -1, 0, 0, 1, 0 };
+
 int main( void )
 {
     if( glfwInit() != GL_TRUE )
@@ -51,8 +53,33 @@ int main( void )
 
     // GL
 
+    glClearColor( 0, 0, 0.4, 0 );
+
+    GLuint programID = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
+
+    GLuint vertexarray;
+    glGenVertexArrays( 1, &vertexarray );
+    glBindVertexArray( vertexarray );
+
+    GLuint vertexbuffer;
+    glGenBuffers( 1, &vertexbuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( g_triangle ), g_triangle, GL_STATIC_DRAW );
+
     do
     {
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+        glUseProgram( programID );
+
+        glEnableVertexAttribArray( 0 );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+
+        glDrawArrays( GL_TRIANGLES, 0, 3 );
+
+        glDisableVertexAttribArray( 0 );
+
         glfwSwapBuffers( window );
         glfwPollEvents();
     } while( glfwGetKey( window, GLFW_KEY_ESCAPE ) != GL_TRUE && !glfwWindowShouldClose( window ) );
