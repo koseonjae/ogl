@@ -83,6 +83,11 @@ int main( void )
     glBindBuffer( GL_ARRAY_BUFFER, uvbuffer );
     glBufferData( GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof( vec2 ), indexed_uvs.data(), GL_STATIC_DRAW );
 
+    GLuint normalbuffer;
+    glGenBuffers( 1, &normalbuffer );
+    glBindBuffer( GL_ARRAY_BUFFER, normalbuffer );
+    glBufferData( GL_ARRAY_BUFFER, indexed_normals.size() * sizeof( vec3 ), indexed_normals.data(), GL_STATIC_DRAW );
+
     GLuint elementbuffer;
     glGenBuffers( 1, &elementbuffer );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
@@ -118,10 +123,15 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, uvbuffer );
         glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
 
+        glEnableVertexAttribArray( 2 );
+        glBindBuffer( GL_ARRAY_BUFFER, normalbuffer );
+        glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
         glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
+        glDisableVertexAttribArray( 2 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
