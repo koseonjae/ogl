@@ -126,6 +126,9 @@ int main( void )
 
     glDrawBuffer( GL_NONE );
 
+    if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
+        return false;
+
     GLuint depthMVPLocation = glGetUniformLocation( depthProgramId, "DepthMVP" );
     GLuint depthSamplerLocation = glGetUniformLocation( programId, "shadowSampler" );
     GLuint depthBiasMVPLocation = glGetUniformLocation( programId, "DepthBiasMVP" );
@@ -139,6 +142,7 @@ int main( void )
         // -----------------
 
         glBindFramebuffer( GL_FRAMEBUFFER, depthFramebufferId );
+        glViewport(0,0,1024,1024);
 
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -150,16 +154,23 @@ int main( void )
         mat4 lightProjection = ortho<float>( -10, 10, -10, 10, -10, 20 );
 
         mat4 depthMVP = lightProjection * lightView * lightModel;
-        mat4 depthBiaseMVP = biasMatrix * depthMVP;
-
         glUniformMatrix4fv( depthMVPLocation, 1, GL_FALSE, &depthMVP[0][0] );
-        glUniformMatrix4fv( depthBiasMVPLocation, 1, GL_FALSE, &depthBiaseMVP[0][0] );
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
+        glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
+
+        glDisableVertexAttribArray( 0 );
 
         // -----------------
         // main frame buffer
         // -----------------
 
         glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+        glViewport(0,0,windowWidth,windowHeight);
 
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -171,6 +182,9 @@ int main( void )
         mat4 projection = getProjectionMatrix();
         mat4 MVP = projection * view * model;
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, &MVP[0][0] );
+
+        mat4 depthBiaseMVP = biasMatrix * depthMVP;
+        glUniformMatrix4fv( depthBiasMVPLocation, 1, GL_FALSE, &depthBiaseMVP[0][0] );
 
         glActiveTexture( GL_TEXTURE0 );
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
