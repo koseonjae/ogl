@@ -66,11 +66,20 @@ int main( void )
     glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
     glBufferData( GL_ARRAY_BUFFER, sizeof( g_triangle ), g_triangle, GL_STATIC_DRAW );
 
+    GLuint MatrixID = glGetUniformLocation( programID, "MVP" );
+
+    mat4 model = mat4( 1.f );
+    mat4 view = lookAt( vec3( 5, 5, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
+    mat4 projection = perspective( radians( 45.F ), ( GLfloat ) g_width / ( GLfloat ) g_height, 0.1f, 10.f );
+    mat4 mvp = projection * view * model;
+
     do
     {
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         glUseProgram( programID );
+
+        glUniformMatrix4fv( MatrixID, 1, GL_FALSE, &mvp[0][0] );
 
         glEnableVertexAttribArray( 0 );
         glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
