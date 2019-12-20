@@ -57,7 +57,6 @@ int main( void )
     glClearColor( 0, 0, 0.4, 0 );
 
     glEnable( GL_DEPTH_TEST );
-
     glDepthFunc( GL_LESS );
 
     GLuint programID = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
@@ -78,13 +77,8 @@ int main( void )
 
     GLuint MatrixID = glGetUniformLocation( programID, "MVP" );
 
-    mat4 model = mat4( 1.f );
-    mat4 view = lookAt( vec3( 5, 5, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
-    mat4 projection = perspective( radians( 45.F ), ( GLfloat ) g_width / ( GLfloat ) g_height, 0.1f, 10.f );
-    mat4 mvp = projection * view * model;
-
     GLuint diffuseTextureID = glGetUniformLocation( programID, "diffuseSampler" );
-    GLuint diffuseTexture = loadDDS("../tutorial05_textured_cube/uvtemplate.DDS");
+    GLuint diffuseTexture = loadDDS( "../tutorial05_textured_cube/uvtemplate.DDS" );
 
     do
     {
@@ -96,6 +90,11 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, diffuseTexture );
         glUniform1i( diffuseTextureID, 0 );
 
+        computeMatricesFromInputs( g_width, g_height );
+        mat4 model = mat4( 1.f );
+        mat4 view = getViewMatrix();
+        mat4 projection = getProjectionMatrix();
+        mat4 mvp = projection * view * model;
         glUniformMatrix4fv( MatrixID, 1, GL_FALSE, &mvp[0][0] );
 
         glEnableVertexAttribArray( 0 );
