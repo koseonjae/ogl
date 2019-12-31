@@ -6,8 +6,30 @@ uniform sampler2D diffuseSampler;
 
 in vec2 uv;
 
+in float distance;
+in vec3 normalDirection_cameraspace;
+in vec3 lightDirection_cameraspace;
+in vec3 eyeDirection_cameraspace;
+
 void main( void )
 {
-    fragColor.rgb = texture(diffuseSampler, uv).rgb;
+    vec3 lightColor = vec3(1,1,1);
+    float lightPower = 40.f;
+
+    vec3 materialDiffuse = texture(diffuseSampler, uv).rgb;
+    vec3 materialAmbient = materialDiffuse * 0.1;
+    vec3 materialSpecular = 0.3 * lightColor;
+
+    vec3 n = normalize(normalDirection_cameraspace);
+    vec3 l = normalize(lightDirection_cameraspace);
+    vec3 v = normalize(eyeDirection_cameraspace);
+    vec3 r = reflect(-l, n);
+
+    float cosTheta = clamp(dot(n, l), 0, 1);
+    float cosAlpha = clamp(dot(v, r), 0, 1);
+
+    fragColor.rgb = materialAmbient +
+                    lightPower * lightColor * materialDiffuse * cosTheta / (distance * distance) +
+                    lightPower * lightColor * materialSpecular * cosAlpha / (distance * distance);
     fragColor.a = 1;
 }
