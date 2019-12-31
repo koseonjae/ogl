@@ -62,26 +62,22 @@ int main( void )
     glGenVertexArrays( 1, &vertexarray );
     glBindVertexArray( vertexarray );
 
+    vector<vec3> vertices;
+    vector<vec2> uvs;
+    vector<vec3> normals;
+    loadOBJ( "../tutorial07_model_loading/cube.obj", vertices, uvs, normals );
+
     GLuint vertexbuffer;
     glGenBuffers( 1, &vertexbuffer );
     glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( g_vertex_buffer_data ), g_vertex_buffer_data, GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec3 ), vertices.data(), GL_STATIC_DRAW );
 
     GLuint uvbuffer;
     glGenBuffers( 1, &uvbuffer );
     glBindBuffer( GL_ARRAY_BUFFER, uvbuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( g_uv_buffer_data ), g_uv_buffer_data, GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, uvs.size() * sizeof( vec2 ), uvs.data(), GL_STATIC_DRAW );
 
-    auto image = BmpLoader::loadBmp( "../tutorial00_custom/input.bmp" );
-
-    GLuint diffuseTextureId;
-    glGenTextures( 1, &diffuseTextureId );
-    glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, 300, 300, 0, GL_BGR, GL_UNSIGNED_BYTE, image.data() );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    GLuint diffuseTextureId = loadDDS( "../tutorial07_model_loading/uvmap.DDS" );
 
     GLuint diffuseTextureLocation = glGetUniformLocation( programID, "diffuseSampler" );
 
@@ -135,7 +131,7 @@ int main( void )
         glBindBuffer( GL_ARRAY_BUFFER, uvbuffer );
         glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
 
-        glDrawArrays( GL_TRIANGLES, 0, 3 * 12 );
+        glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
 
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
