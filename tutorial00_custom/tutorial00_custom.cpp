@@ -86,10 +86,6 @@ int main( void )
     GLuint diffuseTextureLocation = glGetUniformLocation( programID, "diffuseSampler" );
 
     GLuint mvpLocation = glGetUniformLocation( programID, "MVP" );
-    mat4 model = mat4( 1.f );
-    mat4 view = lookAt( vec3( 5, 5, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
-    mat4 projection = perspective( radians( 45.f ), ( GLfloat ) g_width / ( GLfloat ) g_height, 0.1f, 100.f );
-    mat4 mvp = projection * view * model;
 
     do
     {
@@ -124,6 +120,11 @@ int main( void )
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseTextureLocation, 0 );
 
+        computeMatricesFromInputs( g_width, g_height );
+        mat4 model = mat4( 1.f );
+        mat4 view = getViewMatrix();
+        mat4 projection = getProjectionMatrix();
+        mat4 mvp = projection * view * model;
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, value_ptr( mvp ) );
 
         glEnableVertexAttribArray( 0 );
