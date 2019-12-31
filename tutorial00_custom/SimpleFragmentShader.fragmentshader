@@ -31,5 +31,5 @@ void main( void )
     fragColor.rgb = materialAmbient +
                     lightPower * lightColor * materialDiffuse * cosTheta / (distance * distance) +
                     lightPower * lightColor * materialSpecular * pow(cosAlpha, 5) / (distance * distance);
-    fragColor.a = 1;
+    fragColor.a = 0.5;
 }
