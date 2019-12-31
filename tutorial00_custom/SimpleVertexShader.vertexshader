@@ -24,10 +24,10 @@ void main( void )
 
     distance = length( (M * vec4(vertexPosition, 1)).xyz - lightPosition );
 
-    normalDirection_cameraspace = (MV * vec4(vertexNormal, -1)).xyz;
+    normalDirection_cameraspace = (MV * vec4(vertexNormal, 0)).xyz;
 
     vec3 vertexPosition_cameraspace = (MV * vec4(vertexPosition, 1)).xyz;
     eyeDirection_cameraspace = 0 - vertexPosition_cameraspace;
 
-    lightDirection_cameraspace =  (MV * vec4(lightPosition, 1)).xyz - vertexPosition_cameraspace;
+    lightDirection_cameraspace =  (V * vec4(lightPosition, 1)).xyz - vertexPosition_cameraspace;
 }

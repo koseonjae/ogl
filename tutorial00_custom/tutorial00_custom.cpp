@@ -138,8 +138,8 @@ int main( void )
         glUniformMatrix4fv( mvLocation, 1, GL_FALSE, value_ptr( mv ) );
 
 
-        vec3 lightPosition = vec3( 5,5,5 );
-        glUniform3f( lightPositionLocation, lightPosition[0], lightPosition[1], lightPosition[2] );
+        vec3 lightPosition = vec3( 5, 5, 5 );
+        glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );

@@ -18,7 +18,7 @@ void main( void )
 
     vec3 materialDiffuse = texture(diffuseSampler, uv).rgb;
     vec3 materialAmbient = materialDiffuse * 0.1;
-    vec3 materialSpecular = 0.3 * lightColor;
+    vec3 materialSpecular = vec3(0.3,0.3,0.3);
 
     vec3 n = normalize(normalDirection_cameraspace);
     vec3 l = normalize(lightDirection_cameraspace);
@@ -30,6 +30,6 @@ void main( void )
 
     fragColor.rgb = materialAmbient +
                     lightPower * lightColor * materialDiffuse * cosTheta / (distance * distance) +
-                    lightPower * lightColor * materialSpecular * cosAlpha / (distance * distance);
+                    lightPower * lightColor * materialSpecular * pow(cosAlpha, 5) / (distance * distance);
     fragColor.a = 1;
 }
