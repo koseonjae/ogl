@@ -97,8 +97,6 @@ public:
         glCullFace( GL_BACK ); // 레스터라이저의 뒷면제거 설정
         glFrontFace( GL_CCW ); // counter clock wise를 front face로 설정
 
-        glViewport( 0, 0, windowWidth, windowHeight ); // 레스터라이저의 뷰포트 변환
-
         glEnable( GL_DEPTH_TEST ); // 출력 병합기의 z 버퍼링 활성화
         glDepthFunc( GL_LESS ); // z값이 작은 (더 앞에 있는걸) 선택하도록 함
 
@@ -291,6 +289,62 @@ private:
     GLuint holstainSamplerLocation{ 0 };
 };
 
+class WooblyNode final
+{
+public:
+    void initialize( int width, int height )
+    {
+        windowWidth = width;
+        windowHeight = height;
+
+        programId = LoadShaders( "Passthrough.vertexshader", "WobblyTexture.fragmentshader", "../tutorial00_custom/" );
+
+        GLfloat pathThroughVertexPosition[]{ -1, 1, 0, -1, -1, 0, 1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0 };
+        glGenBuffers( 1, &vertexbuffer );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glBufferData( GL_ARRAY_BUFFER, sizeof( pathThroughVertexPosition ), pathThroughVertexPosition, GL_STATIC_DRAW );
+
+        diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
+    }
+
+    void release( void )
+    {
+        // todo
+    }
+
+    void render( int textureId )
+    {
+        // --------
+        // pipeline
+        // --------
+
+        // ----
+        // draw
+        // ----
+
+        glUseProgram( programId );
+
+        glActiveTexture( GL_TEXTURE0 );
+        glBindTexture( GL_TEXTURE_2D, textureId );
+        glUniform1i( diffuseSamplerLocation, 0 );
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glDrawArrays( GL_TRIANGLES, 0, 3 * 2 );
+
+        glDisableVertexAttribArray( 0 );
+    }
+
+private:
+    GLuint windowWidth{ 0 };
+    GLuint windowHeight{ 0 };
+    GLuint programId{ 0 };
+    GLuint vertexbuffer{ 0 };
+    GLuint diffuseSamplerLocation{ 0 };
+};
+
 int main( void )
 {
     if( glfwInit() != GL_TRUE )
@@ -325,11 +379,41 @@ int main( void )
 
     glClearColor( 0, 0.4, 0, 0 );
 
+    GLuint framebufferId;
+    glGenFramebuffers( 1, &framebufferId );
+    glBindFramebuffer( GL_FRAMEBUFFER, framebufferId );
+
+    GLuint framebufferTextureId;
+    glGenTextures( 1, &framebufferTextureId );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+    glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, framebufferTextureId, 0 );
+    GLenum drawArr[]{ GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers( 1, drawArr );
+
+    GLuint depthRenderbuffer;
+    glGenRenderbuffers( 1, &depthRenderbuffer );
+    glBindRenderbuffer( GL_RENDERBUFFER, depthRenderbuffer );
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer );
+
+    if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
+    {
+        assert( false );
+    }
+
     SuzzaneNode suzzaneNode;
     suzzaneNode.initialize( windowWidth, windowHeight );
 
     TextNode textNode;
     textNode.initialize( windowWidth, windowHeight );
+
+    WooblyNode wooblyNode;
+    wooblyNode.initialize( windowWidth, windowHeight );
 
     do
     {
@@ -337,7 +421,8 @@ int main( void )
         // render target
         // -------------
 
-        glBindFramebuffer( GL_FRAMEBUFFER, 0 ); // 스크린 프레임 버퍼 바인팅
+        glBindFramebuffer( GL_FRAMEBUFFER, framebufferId );
+        glViewport( 0, 0, windowWidth, windowHeight ); // 레스터라이저의 뷰포트 변환
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
 
         // ------
@@ -347,6 +432,20 @@ int main( void )
         suzzaneNode.render();
 
         textNode.render( to_string( glfwGetTime() ), 10, 700, 60 );
+
+        // -------------
+        // render target
+        // -------------
+
+        glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+        glViewport( 0, 0, windowWidth, windowHeight );
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
+
+        // ------
+        // render
+        // ------
+
+        wooblyNode.render( framebufferTextureId );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
