@@ -1,0 +1,12 @@
+#version 330 core
+
+layout(location = 0) out vec4 fragColor;
+
+uniform sampler2D holstainSampler;
+
+in vec2 uv;
+
+void main(void)
+{
+    fragColor = texture(holstainSampler, uv);
+}

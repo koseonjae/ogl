@@ -1,0 +1,13 @@
+#version 330 core
+
+layout (location = 0) in vec2 vertexPosition_screenspace;
+layout (location = 1) in vec2 vertexUV;
+
+out vec2 uv;
+
+void main(void)
+{
+    vec2 homogeneousPosition = (vertexPosition_screenspace - vec2(512, 384)) / vec2(512, 384);
+    gl_Position = vec4(homogeneousPosition, 0, 1);
+    uv = vertexUV;
+}

@@ -160,6 +160,104 @@ private:
     GLuint lightPositionLocation{ 0 };
 };
 
+class TextNode final
+{
+public:
+    void initialize( int width, int height )
+    {
+        programID = LoadShaders( "TextVertexShader.vertexshader", "TextFragmentShader.fragmentshader", "../tutorial00_custom/" );
+
+        glGenBuffers( 1, &vertexbuffer );
+
+        glGenBuffers( 1, &uvbuffer );
+
+        holstainTextureId = loadDDS( "../tutorial11_2d_fonts/Holstein.DDS" );
+
+        holstainSamplerLocation = glGetUniformLocation( programID, "holstainSampler" );
+    }
+
+    void release( void )
+    {
+        // todo: release resources
+    }
+
+    void render( const std::string& text, int x, int y, int size )
+    {
+        // render target
+        glUseProgram( programID );
+
+        // pipeline
+        // nothing
+
+        // set buffer
+        unsigned int length = text.size();
+
+        // Fill buffers
+        std::vector<glm::vec2> vertices;
+        std::vector<glm::vec2> UVs;
+        for( unsigned int i = 0; i < length; i++ )
+        {
+
+            glm::vec2 vertex_up_left = glm::vec2( x + i * size, y + size );
+            glm::vec2 vertex_up_right = glm::vec2( x + i * size + size, y + size );
+            glm::vec2 vertex_down_right = glm::vec2( x + i * size + size, y );
+            glm::vec2 vertex_down_left = glm::vec2( x + i * size, y );
+
+            vertices.push_back( vertex_up_left );
+            vertices.push_back( vertex_down_left );
+            vertices.push_back( vertex_up_right );
+
+            vertices.push_back( vertex_down_right );
+            vertices.push_back( vertex_up_right );
+            vertices.push_back( vertex_down_left );
+
+            char character = text[i];
+            float uv_x = ( character % 16 ) / 16.0f;
+            float uv_y = ( character / 16 ) / 16.0f;
+
+            glm::vec2 uv_up_left = glm::vec2( uv_x, uv_y );
+            glm::vec2 uv_up_right = glm::vec2( uv_x + 1.0f / 16.0f, uv_y );
+            glm::vec2 uv_down_right = glm::vec2( uv_x + 1.0f / 16.0f, ( uv_y + 1.0f / 16.0f ) );
+            glm::vec2 uv_down_left = glm::vec2( uv_x, ( uv_y + 1.0f / 16.0f ) );
+            UVs.push_back( uv_up_left );
+            UVs.push_back( uv_down_left );
+            UVs.push_back( uv_up_right );
+
+            UVs.push_back( uv_down_right );
+            UVs.push_back( uv_up_right );
+            UVs.push_back( uv_down_left );
+        }
+
+        // draw call
+
+        glActiveTexture( GL_TEXTURE0 );
+        glBindTexture( GL_TEXTURE_2D, holstainTextureId );
+        glUniform1i( holstainSamplerLocation, 0 );
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glBufferData( GL_ARRAY_BUFFER, vertices.size() * sizeof( vec2 ), vertices.data(), GL_STATIC_DRAW );
+        glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glEnableVertexAttribArray( 1 );
+        glBindBuffer( GL_ARRAY_BUFFER, uvbuffer );
+        glBufferData( GL_ARRAY_BUFFER, UVs.size() * sizeof( vec2 ), UVs.data(), GL_STATIC_DRAW );
+        glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glDrawArrays( GL_TRIANGLES, 0, vertices.size() );
+
+        glDisableVertexAttribArray( 0 );
+        glDisableVertexAttribArray( 1 );
+    }
+
+private:
+    GLuint programID{ 0 };
+    GLuint vertexbuffer{ 0 };
+    GLuint uvbuffer{ 0 };
+    GLuint holstainTextureId{ 0 };
+    GLuint holstainSamplerLocation{ 0 };
+};
+
 int main( void )
 {
     if( glfwInit() != GL_TRUE )
@@ -197,9 +295,14 @@ int main( void )
     SuzzaneNode suzzaneNode;
     suzzaneNode.initialize( windowWidth, windowHeight );
 
+    TextNode textNode;
+    textNode.initialize( windowWidth, windowHeight );
+
     do
     {
         suzzaneNode.render();
+
+        textNode.render( to_string( glfwGetTime() ), 10, 700, 60 );
 
         glfwSwapBuffers( window );
         glfwPollEvents();
@@ -207,6 +310,7 @@ int main( void )
 
     // DELETE RESOURCE
     suzzaneNode.release();
+    textNode.release();
 
     return 0;
 }
