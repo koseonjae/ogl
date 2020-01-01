@@ -88,17 +88,11 @@ public:
 
     void render( void )
     {
-        // ------------------
-        // 렌더 타겟 설정 및 초기화
-        // ------------------
+        // -----------
+        // pipeline
+        // -----------
 
         glUseProgram( programID );
-        glBindFramebuffer( GL_FRAMEBUFFER, 0 ); // 스크린 프레임 버퍼 바인팅
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
-
-        // -----------
-        // 파이프라인 설정
-        // -----------
 
         glCullFace( GL_BACK ); // 레스터라이저의 뒷면제거 설정
         glFrontFace( GL_CCW ); // counter clock wise를 front face로 설정
@@ -339,6 +333,17 @@ int main( void )
 
     do
     {
+        // -------------
+        // render target
+        // -------------
+
+        glBindFramebuffer( GL_FRAMEBUFFER, 0 ); // 스크린 프레임 버퍼 바인팅
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
+
+        // ------
+        // render
+        // ------
+
         suzzaneNode.render();
 
         textNode.render( to_string( glfwGetTime() ), 10, 700, 60 );
