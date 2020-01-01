@@ -385,6 +385,7 @@ int main( void )
 
     GLuint framebufferTextureId;
     glGenTextures( 1, &framebufferTextureId );
+    glBindTexture( GL_TEXTURE_2D, framebufferTextureId );
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
