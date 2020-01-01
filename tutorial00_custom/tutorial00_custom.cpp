@@ -19,92 +19,59 @@ GLFWwindow *window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
 
-static const GLfloat g_vertex_buffer_data[] = { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, 1.0f };
-static const GLfloat g_uv_buffer_data[] = { 0.000059f, 1.0f - 0.000004f, 0.000103f, 1.0f - 0.336048f, 0.335973f, 1.0f - 0.335903f, 1.000023f, 1.0f - 0.000013f, 0.667979f, 1.0f - 0.335851f, 0.999958f, 1.0f - 0.336064f, 0.667979f, 1.0f - 0.335851f, 0.336024f, 1.0f - 0.671877f, 0.667969f, 1.0f - 0.671889f, 1.000023f, 1.0f - 0.000013f, 0.668104f, 1.0f - 0.000013f, 0.667979f, 1.0f - 0.335851f, 0.000059f, 1.0f - 0.000004f, 0.335973f, 1.0f - 0.335903f, 0.336098f, 1.0f - 0.000071f, 0.667979f, 1.0f - 0.335851f, 0.335973f, 1.0f - 0.335903f, 0.336024f, 1.0f - 0.671877f, 1.000004f, 1.0f - 0.671847f, 0.999958f, 1.0f - 0.336064f, 0.667979f, 1.0f - 0.335851f, 0.668104f, 1.0f - 0.000013f, 0.335973f, 1.0f - 0.335903f, 0.667979f, 1.0f - 0.335851f, 0.335973f, 1.0f - 0.335903f, 0.668104f, 1.0f - 0.000013f, 0.336098f, 1.0f - 0.000071f, 0.000103f, 1.0f - 0.336048f, 0.000004f, 1.0f - 0.671870f, 0.336024f, 1.0f - 0.671877f, 0.000103f, 1.0f - 0.336048f, 0.336024f, 1.0f - 0.671877f, 0.335973f, 1.0f - 0.335903f, 0.667969f, 1.0f - 0.671889f, 1.000004f, 1.0f - 0.671847f, 0.667979f, 1.0f - 0.335851f };
-
-int main( void )
+class SuzzaneNode final
 {
-    if( glfwInit() != GL_TRUE )
+public:
+    void initialize( int width, int height )
     {
-        assert( false );
+        windowWidth = width;
+        windowHeight = height;
+
+        programID = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
+
+        glGenVertexArrays( 1, &vertexarray );
+        glBindVertexArray( vertexarray );
+
+        vector<vec3> vertices;
+        vector<vec2> uvs;
+        vector<vec3> normals;
+        loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
+        indexVBO( vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals );
+
+        glGenBuffers( 1, &vertexbuffer );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glBufferData( GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof( vec3 ), indexed_vertices.data(), GL_STATIC_DRAW );
+
+        glGenBuffers( 1, &uvbuffer );
+        glBindBuffer( GL_ARRAY_BUFFER, uvbuffer );
+        glBufferData( GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof( vec2 ), indexed_uvs.data(), GL_STATIC_DRAW );
+
+        glGenBuffers( 1, &normalbuffer );
+        glBindBuffer( GL_ARRAY_BUFFER, normalbuffer );
+        glBufferData( GL_ARRAY_BUFFER, indexed_normals.size() * sizeof( vec3 ), indexed_normals.data(), GL_STATIC_DRAW );
+
+        glGenBuffers( 1, &elementbuffer );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
+        glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
+
+        diffuseTextureId = loadDDS( "../tutorial08_basic_shading/uvmap.DDS" );
+
+        diffuseTextureLocation = glGetUniformLocation( programID, "diffuseSampler" );
+
+        mvpLocation = glGetUniformLocation( programID, "MVP" );
+        mLocation = glGetUniformLocation( programID, "M" );
+        vLocation = glGetUniformLocation( programID, "V" );
+        mvLocation = glGetUniformLocation( programID, "MV" );
+
+        lightPositionLocation = glGetUniformLocation( programID, "lightPosition" );
     }
-    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-    glfwWindowHint( GLFW_SAMPLES, 4 );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
-    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
 
-    window = glfwCreateWindow( g_width, g_height, "tutorial00", nullptr, nullptr );
-    glfwMakeContextCurrent( window );
-
-    int windowWidth = g_width;
-    int windowHeight = g_height;
-    glfwGetFramebufferSize( window, &windowWidth, &windowHeight );
-
-    glfwSetInputMode( window, GLFW_STICKY_KEYS, GLFW_KEY_ESCAPE );
-    glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
-    glfwPollEvents();
-    glfwSetCursorPos( window, g_width / 2, g_height / 2 );
-
-    glewExperimental = GL_TRUE;
-    if( glewInit() != GLEW_OK )
+    void release( void )
     {
-        assert( false );
+        // todo: delete resources
     }
 
-    // GL
-
-    glClearColor( 0, 0.4, 0, 0 );
-
-    GLuint programID = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
-
-    GLuint vertexarray;
-    glGenVertexArrays( 1, &vertexarray );
-    glBindVertexArray( vertexarray );
-
-    vector<vec3> vertices;
-    vector<vec2> uvs;
-    vector<vec3> normals;
-    loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
-
-    vector<unsigned short> indices;
-    vector<vec3> indexed_vertices;
-    vector<vec2> indexed_uvs;
-    vector<vec3> indexed_normals;
-    indexVBO( vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals );
-
-    GLuint vertexbuffer;
-    glGenBuffers( 1, &vertexbuffer );
-    glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
-    glBufferData( GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof( vec3 ), indexed_vertices.data(), GL_STATIC_DRAW );
-
-    GLuint uvbuffer;
-    glGenBuffers( 1, &uvbuffer );
-    glBindBuffer( GL_ARRAY_BUFFER, uvbuffer );
-    glBufferData( GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof( vec2 ), indexed_uvs.data(), GL_STATIC_DRAW );
-
-    GLuint normalbuffer;
-    glGenBuffers( 1, &normalbuffer );
-    glBindBuffer( GL_ARRAY_BUFFER, normalbuffer );
-    glBufferData( GL_ARRAY_BUFFER, indexed_normals.size() * sizeof( vec3 ), indexed_normals.data(), GL_STATIC_DRAW );
-
-    GLuint elementbuffer;
-    glGenBuffers( 1, &elementbuffer );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
-
-    GLuint diffuseTextureId = loadDDS( "../tutorial08_basic_shading/uvmap.DDS" );
-
-    GLuint diffuseTextureLocation = glGetUniformLocation( programID, "diffuseSampler" );
-
-    GLuint mvpLocation = glGetUniformLocation( programID, "MVP" );
-    GLuint mLocation = glGetUniformLocation( programID, "M" );
-    GLuint vLocation = glGetUniformLocation( programID, "V" );
-    GLuint mvLocation = glGetUniformLocation( programID, "MV" );
-
-    GLuint lightPositionLocation = glGetUniformLocation( programID, "lightPosition" );
-
-    do
+    void render( void )
     {
         // ------------------
         // 렌더 타겟 설정 및 초기화
@@ -148,7 +115,6 @@ int main( void )
         glUniformMatrix4fv( vLocation, 1, GL_FALSE, value_ptr( view ) );
         glUniformMatrix4fv( mvLocation, 1, GL_FALSE, value_ptr( mv ) );
 
-
         vec3 lightPosition = vec3( 5, 5, 5 );
         glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
@@ -170,12 +136,77 @@ int main( void )
         glDisableVertexAttribArray( 0 );
         glDisableVertexAttribArray( 1 );
         glDisableVertexAttribArray( 2 );
+    }
+
+private:
+    int windowWidth{ 0 };
+    int windowHeight{ 0 };
+    GLuint programID{ 0 };
+    GLuint vertexarray{ 0 };
+    vector<unsigned short> indices;
+    vector<vec3> indexed_vertices;
+    vector<vec2> indexed_uvs;
+    vector<vec3> indexed_normals;
+    GLuint vertexbuffer{ 0 };
+    GLuint uvbuffer{ 0 };
+    GLuint normalbuffer{ 0 };
+    GLuint elementbuffer{ 0 };
+    GLuint diffuseTextureId{ 0 };
+    GLuint diffuseTextureLocation{ 0 };
+    GLuint mvpLocation{ 0 };
+    GLuint mLocation{ 0 };
+    GLuint vLocation{ 0 };
+    GLuint mvLocation{ 0 };
+    GLuint lightPositionLocation{ 0 };
+};
+
+int main( void )
+{
+    if( glfwInit() != GL_TRUE )
+    {
+        assert( false );
+    }
+    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+    glfwWindowHint( GLFW_SAMPLES, 4 );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
+    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
+
+    window = glfwCreateWindow( g_width, g_height, "tutorial00", nullptr, nullptr );
+    glfwMakeContextCurrent( window );
+
+    int windowWidth = g_width;
+    int windowHeight = g_height;
+    glfwGetFramebufferSize( window, &windowWidth, &windowHeight );
+
+    glfwSetInputMode( window, GLFW_STICKY_KEYS, GLFW_KEY_ESCAPE );
+    glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+    glfwPollEvents();
+    glfwSetCursorPos( window, g_width / 2, g_height / 2 );
+
+    glewExperimental = GL_TRUE;
+    if( glewInit() != GLEW_OK )
+    {
+        assert( false );
+    }
+
+    // GL
+
+    glClearColor( 0, 0.4, 0, 0 );
+
+    SuzzaneNode suzzaneNode;
+    suzzaneNode.initialize( windowWidth, windowHeight );
+
+    do
+    {
+        suzzaneNode.render();
 
         glfwSwapBuffers( window );
         glfwPollEvents();
     } while( glfwGetKey( window, GLFW_KEY_ESCAPE ) != GL_TRUE && !glfwWindowShouldClose( window ) );
 
     // DELETE RESOURCE
+    suzzaneNode.release();
 
     return 0;
 }
