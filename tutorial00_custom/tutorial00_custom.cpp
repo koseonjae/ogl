@@ -35,8 +35,11 @@ public:
         vector<vec3> vertices;
         vector<vec2> uvs;
         vector<vec3> normals;
-        loadOBJ( "../tutorial08_basic_shading/suzanne.obj", vertices, uvs, normals );
-        indexVBO( vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals );
+        vector<vec3> tangents;
+        vector<vec3> bitangents;
+        loadOBJ( "../tutorial13_normal_mapping/cylinder.obj", vertices, uvs, normals );
+        computeTangentBasis( vertices, uvs, normals, tangents, bitangents );
+        indexVBO_TBN( vertices, uvs, normals, tangents, bitangents, indices, indexed_vertices, indexed_uvs, indexed_normals, indexed_tangents, indexed_bitangents );
 
         glGenBuffers( 1, &vertexbuffer );
         glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
@@ -50,13 +53,25 @@ public:
         glBindBuffer( GL_ARRAY_BUFFER, normalbuffer );
         glBufferData( GL_ARRAY_BUFFER, indexed_normals.size() * sizeof( vec3 ), indexed_normals.data(), GL_STATIC_DRAW );
 
+        glGenBuffers( 1, &tangentbuffer );
+        glBindBuffer( GL_ARRAY_BUFFER, tangentbuffer );
+        glBufferData( GL_ARRAY_BUFFER, indexed_tangents.size() * sizeof( vec3 ), indexed_tangents.data(), GL_STATIC_DRAW );
+
+        glGenBuffers( 1, &bitangentbuffer );
+        glBindBuffer( GL_ARRAY_BUFFER, bitangentbuffer );
+        glBufferData( GL_ARRAY_BUFFER, indexed_bitangents.size() * sizeof( vec3 ), indexed_bitangents.data(), GL_STATIC_DRAW );
+
         glGenBuffers( 1, &elementbuffer );
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
         glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
 
-        diffuseTextureId = loadDDS( "../tutorial08_basic_shading/uvmap.DDS" );
+        diffuseTextureId = loadDDS( "../tutorial13_normal_mapping/diffuse.DDS" );
+        specularTextureId = loadDDS( "../tutorial13_normal_mapping/specular.DDS" );
+        normalTextureId = loadBMP_custom( "../tutorial13_normal_mapping/normal.bmp" );
 
         diffuseTextureLocation = glGetUniformLocation( programID, "diffuseSampler" );
+        specularTextureLocation = glGetUniformLocation( programID, "specularSampler" );
+        normalTextureLocation = glGetUniformLocation( programID, "normalSampler" );
 
         mvpLocation = glGetUniformLocation( programID, "MVP" );
         mLocation = glGetUniformLocation( programID, "M" );
@@ -104,6 +119,14 @@ public:
         glBindTexture( GL_TEXTURE_2D, diffuseTextureId );
         glUniform1i( diffuseTextureLocation, 0 );
 
+        glActiveTexture( GL_TEXTURE1 );
+        glBindTexture( GL_TEXTURE_2D, specularTextureId );
+        glUniform1i( specularTextureLocation, 1 );
+
+        glActiveTexture( GL_TEXTURE2 );
+        glBindTexture( GL_TEXTURE_2D, normalTextureId );
+        glUniform1i( normalTextureLocation, 2 );
+
         computeMatricesFromInputs( g_width, g_height );
         mat4 model = mat4( 1.f );
         mat4 view = getViewMatrix();
@@ -115,7 +138,7 @@ public:
         glUniformMatrix4fv( vLocation, 1, GL_FALSE, value_ptr( view ) );
         glUniformMatrix4fv( mvLocation, 1, GL_FALSE, value_ptr( mv ) );
 
-        vec3 lightPosition = vec3( 5, 5, 5 );
+        vec3 lightPosition = vec3( 0, 0, 4 );
         glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
         glEnableVertexAttribArray( 0 );
@@ -129,6 +152,14 @@ public:
         glEnableVertexAttribArray( 2 );
         glBindBuffer( GL_ARRAY_BUFFER, normalbuffer );
         glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glEnableVertexAttribArray( 3 );
+        glBindBuffer( GL_ARRAY_BUFFER, tangentbuffer );
+        glVertexAttribPointer( 3, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glEnableVertexAttribArray( 4 );
+        glBindBuffer( GL_ARRAY_BUFFER, bitangentbuffer );
+        glVertexAttribPointer( 4, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
         glBindVertexArray( elementbuffer );
         glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
@@ -147,12 +178,20 @@ private:
     vector<vec3> indexed_vertices;
     vector<vec2> indexed_uvs;
     vector<vec3> indexed_normals;
+    vector<vec3> indexed_tangents;
+    vector<vec3> indexed_bitangents;
     GLuint vertexbuffer{ 0 };
     GLuint uvbuffer{ 0 };
     GLuint normalbuffer{ 0 };
+    GLuint tangentbuffer{ 0 };
+    GLuint bitangentbuffer{ 0 };
     GLuint elementbuffer{ 0 };
     GLuint diffuseTextureId{ 0 };
+    GLuint specularTextureId{ 0 };
+    GLuint normalTextureId{ 0 };
     GLuint diffuseTextureLocation{ 0 };
+    GLuint specularTextureLocation{ 0 };
+    GLuint normalTextureLocation{ 0 };
     GLuint mvpLocation{ 0 };
     GLuint mLocation{ 0 };
     GLuint vLocation{ 0 };
