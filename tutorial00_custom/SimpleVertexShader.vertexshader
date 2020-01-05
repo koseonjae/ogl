@@ -18,9 +18,6 @@ out vec3 normalDirection_cameraspace;
 out vec3 eyeDirection_cameraspace;
 out vec3 lightDirection_cameraspace;
 
-out vec3 eyeDirection_tangentspace;
-out vec3 lightDirection_tangentspace;
-
 void main( void )
 {
     gl_Position = MVP * vec4(vertexPosition, 1);
@@ -35,15 +32,4 @@ void main( void )
     eyeDirection_cameraspace = 0 - vertexPosition_cameraspace;
 
     lightDirection_cameraspace =  (V * vec4(lightPosition, 1)).xyz - vertexPosition_cameraspace;
-
-    mat3 MV3 = mat3(MV);
-    vec3 vertexTangent_cameraspace = MV3 * vertexTangent;
-    vec3 vertexBitangent_cameraspace = MV3 * vertexBitangent;
-    vec3 vertexNormal_cameraspace = MV3 * vertexNormal;
-
-    mat3 TBN = transpose(mat3(vertexTangent_cameraspace,
-                              vertexBitangent_cameraspace,
-                              vertexNormal_cameraspace));
-    eyeDirection_tangentspace = TBN * eyeDirection_cameraspace;
-    lightDirection_tangentspace = TBN * lightDirection_cameraspace;
 }

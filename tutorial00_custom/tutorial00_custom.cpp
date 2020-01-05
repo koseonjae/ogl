@@ -37,7 +37,7 @@ public:
         vector<vec3> normals;
         vector<vec3> tangents;
         vector<vec3> bitangents;
-        loadOBJ( "../tutorial13_normal_mapping/cylinder.obj", vertices, uvs, normals );
+        loadOBJ( "../tutorial16_shadowmaps/room.obj", vertices, uvs, normals );
         computeTangentBasis( vertices, uvs, normals, tangents, bitangents );
         indexVBO_TBN( vertices, uvs, normals, tangents, bitangents, indices, indexed_vertices, indexed_uvs, indexed_normals, indexed_tangents, indexed_bitangents );
 
@@ -65,7 +65,7 @@ public:
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
         glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
 
-        diffuseTextureId = loadDDS( "../tutorial13_normal_mapping/diffuse.DDS" );
+        diffuseTextureId = loadDDS( "../tutorial16_shadowmaps/uvmap.DDS" );
         specularTextureId = loadDDS( "../tutorial13_normal_mapping/specular.DDS" );
         normalTextureId = loadBMP_custom( "../tutorial13_normal_mapping/normal.bmp" );
 
@@ -130,7 +130,7 @@ public:
         glUniformMatrix4fv( vLocation, 1, GL_FALSE, value_ptr( view ) );
         glUniformMatrix4fv( mvLocation, 1, GL_FALSE, value_ptr( mv ) );
 
-        vec3 lightPosition = vec3( 0, 0, 4 );
+        vec3 lightPosition = vec3( 0.5, 2, 2 );
         glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
         glEnableVertexAttribArray( 0 );
@@ -343,6 +343,19 @@ private:
     GLuint programId{ 0 };
     GLuint vertexbuffer{ 0 };
     GLuint diffuseSamplerLocation{ 0 };
+};
+
+class ShadowNode final
+{
+    // todo
+    // 카메라의 eye position 을 light position으로 한다.
+    // frame buffer를 만들고 texture를 32R 타입(?) 으로 만든다.
+    // 정점과 lightPosition의 거리를 나타내는 벡터를 normalize 하여 0~1 사이의 값으로 frag.r 에 세팅해준다.
+    // 그러면 framebuffer에 바인딩 되어있던 texture는 shadow texture가 된다.
+    // 이 texture를 simbleVertexShader의 uniform으로 넘겨준다.
+    // 그러면 fragment shader에서 현재 depth와 smapling된 depth를 비교한다.
+    // 현재 depth가 sampling된 depth보다 작거나 같으면 diffuse, specular도 더해주고, 크면 그림자속에 있다는 뜻이므로 ambient만 세팅해준다.
+    // 빛의 위치에 대해서 조사 필요
 };
 
 int main( void )

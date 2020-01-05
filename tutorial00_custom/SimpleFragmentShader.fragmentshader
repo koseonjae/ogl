@@ -13,9 +13,6 @@ in vec3 normalDirection_cameraspace;
 in vec3 lightDirection_cameraspace;
 in vec3 eyeDirection_cameraspace;
 
-in vec3 eyeDirection_tangentspace;
-in vec3 lightDirection_tangentspace;
-
 void main( void )
 {
     vec3 lightColor = vec3(1,1,1);
@@ -23,11 +20,11 @@ void main( void )
 
     vec3 materialDiffuse = texture(diffuseSampler, uv).rgb;
     vec3 materialAmbient = materialDiffuse * 0.1;
-    vec3 materialSpecular = texture(specularSampler, uv).rgb * 0.3;
+    vec3 materialSpecular = lightColor * 0.3;
 
-    vec3 n = normalize(texture(normalSampler, vec2(uv.x,-uv.y)).rgb * 2 - 1);
-    vec3 l = normalize(lightDirection_tangentspace);
-    vec3 v = normalize(eyeDirection_tangentspace);
+    vec3 n = normalize(normalDirection_cameraspace);
+    vec3 l = normalize(lightDirection_cameraspace);
+    vec3 v = normalize(eyeDirection_cameraspace);
     vec3 r = reflect(-l, n);
 
     float cosTheta = clamp(dot(n, l), 0, 1);
