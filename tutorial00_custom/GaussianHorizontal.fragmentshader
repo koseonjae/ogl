@@ -1,0 +1,28 @@
+#version 330 core
+
+layout(location = 0) out vec4 fragColor;
+
+uniform sampler2D diffuseSampler;
+
+uniform float Weight[5];
+
+in vec2 uv;
+
+vec4 gaussianFilter() {
+    ivec2 pix = ivec2( gl_FragCoord.xy );
+    vec4 sum = texelFetch(diffuseSampler, pix, 0) * Weight[0];
+    sum += texelFetchOffset( diffuseSampler, pix, 0, ivec2(1,0) ) * Weight[1];
+    sum += texelFetchOffset( diffuseSampler, pix, 0, ivec2(-1,0) ) * Weight[1];
+    sum += texelFetchOffset( diffuseSampler, pix, 0, ivec2(2,0) ) * Weight[2];
+    sum += texelFetchOffset( diffuseSampler, pix, 0, ivec2(-2,0) ) * Weight[2];
+    sum += texelFetchOffset( diffuseSampler, pix, 0, ivec2(3,0) ) * Weight[3];
+    sum += texelFetchOffset( diffuseSampler, pix, 0, ivec2(-3,0) ) * Weight[3];
+    sum += texelFetchOffset( diffuseSampler, pix, 0, ivec2(4,0) ) * Weight[4];
+    sum += texelFetchOffset( diffuseSampler, pix, 0, ivec2(-4,0) ) * Weight[4];
+    return sum;
+}
+
+void main( void )
+{
+    fragColor = gaussianFilter();
+}

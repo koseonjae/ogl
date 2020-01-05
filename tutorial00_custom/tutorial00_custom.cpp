@@ -19,6 +19,19 @@ GLFWwindow *window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
 
+void setUniform( const char *name, GLuint programId, float x )
+{
+    GLint loc = glGetUniformLocation( programId, name );
+    glUniform1f( loc, x );
+}
+
+float gauss( float x, float sigma2 )
+{
+    double coeff = 1.0 / ( glm::two_pi<double>() * sigma2 );
+    double expon = -( x * x ) / ( 2.0 * sigma2 );
+    return ( float ) ( coeff * exp( expon ) );
+}
+
 class SuzzaneNode final
 {
 public:
@@ -289,7 +302,7 @@ private:
     GLuint holstainSamplerLocation{ 0 };
 };
 
-class WooblyNode final
+class GaussianVertical final
 {
 public:
     void initialize( int width, int height )
@@ -297,7 +310,7 @@ public:
         windowWidth = width;
         windowHeight = height;
 
-        programId = LoadShaders( "Passthrough.vertexshader", "WobblyTexture.fragmentshader", "../tutorial00_custom/" );
+        programId = LoadShaders( "Passthrough.vertexshader", "GaussianVertical.fragmentshader", "../tutorial00_custom/" );
 
         GLfloat pathThroughVertexPosition[]{ -1, 1, 0, -1, -1, 0, 1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0 };
         glGenBuffers( 1, &vertexbuffer );
@@ -323,6 +336,99 @@ public:
         // ----
 
         glUseProgram( programId );
+
+        glActiveTexture( GL_TEXTURE0 );
+        glBindTexture( GL_TEXTURE_2D, textureId );
+        glUniform1i( diffuseSamplerLocation, 0 );
+
+        float weights[5], sum, sigma2 = 8.0f;
+
+        // Compute and sum the weights
+        weights[0] = gauss( 0, sigma2 );
+        sum = weights[0];
+        for( int i = 1; i < 5; i++ )
+        {
+            weights[i] = gauss( float( i ), sigma2 );
+            sum += 2 * weights[i];
+        }
+
+        for( int i = 0; i < 5; i++ )
+        {
+            string uniName = glm::detail::format( "Weight[%d]", i );
+            float val = weights[i] / sum;
+            setUniform( uniName.c_str(), programId, val );
+        }
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glDrawArrays( GL_TRIANGLES, 0, 3 * 2 );
+
+        glDisableVertexAttribArray( 0 );
+    }
+
+
+private:
+    GLuint windowWidth{ 0 };
+    GLuint windowHeight{ 0 };
+    GLuint programId{ 0 };
+    GLuint vertexbuffer{ 0 };
+    GLuint diffuseSamplerLocation{ 0 };
+};
+
+class GaussianHorizontal final
+{
+public:
+    void initialize( int width, int height )
+    {
+        windowWidth = width;
+        windowHeight = height;
+
+        programId = LoadShaders( "Passthrough.vertexshader", "GaussianHorizontal.fragmentshader", "../tutorial00_custom/" );
+
+        GLfloat pathThroughVertexPosition[]{ -1, 1, 0, -1, -1, 0, 1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0 };
+        glGenBuffers( 1, &vertexbuffer );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glBufferData( GL_ARRAY_BUFFER, sizeof( pathThroughVertexPosition ), pathThroughVertexPosition, GL_STATIC_DRAW );
+
+        diffuseSamplerLocation = glGetUniformLocation( programId, "diffuseSampler" );
+    }
+
+    void release( void )
+    {
+        // todo
+    }
+
+    void render( int textureId )
+    {
+        // --------
+        // pipeline
+        // --------
+
+        // ----
+        // draw
+        // ----
+
+        glUseProgram( programId );
+
+        float weights[5], sum, sigma2 = 8.0f;
+
+        // Compute and sum the weights
+        weights[0] = gauss( 0, sigma2 );
+        sum = weights[0];
+        for( int i = 1; i < 5; i++ )
+        {
+            weights[i] = gauss( float( i ), sigma2 );
+            sum += 2 * weights[i];
+        }
+
+        for( int i = 0; i < 5; i++ )
+        {
+            string uniName = glm::detail::format( "Weight[%d]", i );
+            float val = weights[i] / sum;
+            setUniform( uniName.c_str(), programId, val );
+        }
 
         glActiveTexture( GL_TEXTURE0 );
         glBindTexture( GL_TEXTURE_2D, textureId );
@@ -379,6 +485,10 @@ int main( void )
 
     glClearColor( 0, 0.4, 0, 0 );
 
+    // --------------
+    // render texture
+    // --------------
+
     GLuint framebufferId;
     glGenFramebuffers( 1, &framebufferId );
     glBindFramebuffer( GL_FRAMEBUFFER, framebufferId );
@@ -407,14 +517,47 @@ int main( void )
         assert( false );
     }
 
+    // -----------------
+    // gaussian vertical
+    // -----------------
+
+    GLuint gaussianframebufferId;
+    glGenFramebuffers( 1, &gaussianframebufferId );
+    glBindFramebuffer( GL_FRAMEBUFFER, gaussianframebufferId );
+
+    GLuint gaussianframebufferTextureId;
+    glGenTextures( 1, &gaussianframebufferTextureId );
+    glBindTexture( GL_TEXTURE_2D, gaussianframebufferTextureId );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+    glFramebufferTexture( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, gaussianframebufferTextureId, 0 );
+    GLenum gaussiandrawArr[]{ GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers( 1, gaussiandrawArr );
+
+    if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
+    {
+        assert( false );
+    }
+
+    // ----
+    // node
+    // ----
+
     SuzzaneNode suzzaneNode;
     suzzaneNode.initialize( windowWidth, windowHeight );
 
     TextNode textNode;
     textNode.initialize( windowWidth, windowHeight );
 
-    WooblyNode wooblyNode;
-    wooblyNode.initialize( windowWidth, windowHeight );
+    GaussianVertical gaussianVertical;
+    gaussianVertical.initialize( windowWidth, windowHeight );
+
+    GaussianHorizontal gaussianHorizontal;
+    gaussianHorizontal.initialize( windowWidth, windowHeight );
 
     do
     {
@@ -438,6 +581,20 @@ int main( void )
         // render target
         // -------------
 
+        glBindFramebuffer( GL_FRAMEBUFFER, gaussianframebufferId );
+        glViewport( 0, 0, windowWidth, windowHeight );
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
+
+        // ------
+        // render
+        // ------
+
+        gaussianVertical.render( framebufferTextureId );
+
+        // -------------
+        // render target
+        // -------------
+
         glBindFramebuffer( GL_FRAMEBUFFER, 0 );
         glViewport( 0, 0, windowWidth, windowHeight );
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
@@ -446,7 +603,7 @@ int main( void )
         // render
         // ------
 
-        wooblyNode.render( framebufferTextureId );
+        gaussianHorizontal.render( gaussianframebufferTextureId );
 
         glfwSwapBuffers( window );
         glfwPollEvents();

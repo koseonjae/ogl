@@ -82,7 +82,8 @@ add_executable( tutorial00_custom
 				tutorial00_custom/TextVertexShader.vertexshader
 				tutorial00_custom/TextFragmentShader.fragmentshader
 				tutorial00_custom/Passthrough.vertexshader
-				tutorial00_custom/WobblyTexture.fragmentshader
+				tutorial00_custom/GaussianVertical.fragmentshader
+				tutorial00_custom/GaussianHorizontal.fragmentshader
 )
 target_link_libraries( tutorial00_custom
                        ${ALL_LIBS}
