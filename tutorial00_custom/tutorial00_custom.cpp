@@ -69,7 +69,7 @@ public:
         specularTextureId = loadDDS( "../tutorial13_normal_mapping/specular.DDS" );
         normalTextureId = loadBMP_custom( "../tutorial13_normal_mapping/normal.bmp" );
 
-        diffuseTextureLocation = glGetUniformLocation( programID, "diffuseSampler" );
+        diffuseTextureLocation = glGetUniformLocation( programID, "RenderTex" );
         specularTextureLocation = glGetUniformLocation( programID, "specularSampler" );
         normalTextureLocation = glGetUniformLocation( programID, "normalSampler" );
 
