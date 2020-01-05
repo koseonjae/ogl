@@ -37,7 +37,7 @@ public:
         vector<vec3> normals;
         vector<vec3> tangents;
         vector<vec3> bitangents;
-        loadOBJ( "../tutorial13_normal_mapping/cylinder.obj", vertices, uvs, normals );
+        loadOBJ( "../tutorial14_render_to_texture/suzanne.obj", vertices, uvs, normals );
         computeTangentBasis( vertices, uvs, normals, tangents, bitangents );
         indexVBO_TBN( vertices, uvs, normals, tangents, bitangents, indices, indexed_vertices, indexed_uvs, indexed_normals, indexed_tangents, indexed_bitangents );
 
@@ -65,7 +65,7 @@ public:
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
         glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
 
-        diffuseTextureId = loadDDS( "../tutorial13_normal_mapping/diffuse.DDS" );
+        diffuseTextureId = loadDDS( "../tutorial14_render_to_texture/uvmap.DDS" );
         specularTextureId = loadDDS( "../tutorial13_normal_mapping/specular.DDS" );
         normalTextureId = loadBMP_custom( "../tutorial13_normal_mapping/normal.bmp" );
 
@@ -130,7 +130,7 @@ public:
         glUniformMatrix4fv( vLocation, 1, GL_FALSE, value_ptr( view ) );
         glUniformMatrix4fv( mvLocation, 1, GL_FALSE, value_ptr( mv ) );
 
-        vec3 lightPosition = vec3( 0, 0, 4 );
+        vec3 lightPosition = vec3( 5, 5, 5 );
         glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
         glEnableVertexAttribArray( 0 );
