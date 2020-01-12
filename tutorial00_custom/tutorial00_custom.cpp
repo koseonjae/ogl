@@ -74,6 +74,7 @@ public:
         specularTextureLocation = glGetUniformLocation( programID, "specularSampler" );
         normalTextureLocation = glGetUniformLocation( programID, "normalSampler" );
 
+        depthBiasLocation = glGetUniformLocation( programID, "DepthBiasMVP" );
         mvpLocation = glGetUniformLocation( programID, "MVP" );
         mLocation = glGetUniformLocation( programID, "M" );
         vLocation = glGetUniformLocation( programID, "V" );
@@ -120,6 +121,10 @@ public:
         glBindTexture( GL_TEXTURE_2D, normalTextureId );
         glUniform1i( normalTextureLocation, 2 );
 
+        glActiveTexture( GL_TEXTURE3 );
+        glBindTexture( GL_TEXTURE_2D, shadowTextureId );
+        glUniform1i( shadowTextureLocation, 3 );
+
         computeMatricesFromInputs( g_width, g_height );
         mat4 model = mat4( 1.f );
         mat4 view = getViewMatrix();
@@ -129,9 +134,9 @@ public:
 
         mat4 shadowModel = mat4( 1.f );
         mat4 shadowView = lookAt( vec3( 1, 7, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
-        mat4 shadowProjection = mat4( 1.0 );
+        mat4 shadowProjection = glm::ortho<float>( -10, 10, -10, 10, -10, 20 );
         glm::mat4 biasMatrix( 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0 );
-        mat4 depthBiasMVP = biasMatrix * projection * view * model;
+        mat4 depthBiasMVP = biasMatrix * shadowProjection * shadowView * shadowModel;
 
         glUniformMatrix4fv( depthBiasLocation, 1, GL_FALSE, value_ptr( depthBiasMVP ) );
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, value_ptr( mvp ) );
@@ -361,7 +366,7 @@ class ShadowNode final
 public:
     void initialize( int width, int height )
     {
-        programID = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
+        programID = LoadShaders( "Depth.vertexshader", "Depth.fragmentshader", "../tutorial00_custom/" );
 
         glGenVertexArrays( 1, &vertexarray );
         glBindVertexArray( vertexarray );
@@ -383,10 +388,7 @@ public:
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
         glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
 
-        mvpLocation = glGetUniformLocation( programID, "MVP" );
-        mLocation = glGetUniformLocation( programID, "M" );
-
-        lightPositionLocation = glGetUniformLocation( programID, "lightPosition" );
+        depthMVPLocation = glGetUniformLocation( programID, "DepthMVP" );
     }
 
     void release( void )
@@ -414,18 +416,15 @@ public:
         // draw call
         // ---------
 
+        vec3 lightPosition = vec3( 1, 7, 5 );
         computeMatricesFromInputs( g_width, g_height );
         mat4 model = mat4( 1.f );
-        mat4 view = lookAt( vec3( 1, 7, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
-        mat4 projection = mat4( 1.0 );
+        mat4 view = lookAt( lightPosition, vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
+        mat4 projection = glm::ortho<float>( -10, 10, -10, 10, -10, 20 );
         glm::mat4 biasMatrix( 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0 );
         mat4 depthMVP = projection * view * model;
         mat4 depthBiasMVP = biasMatrix * projection * view * model;
-        glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, value_ptr( depthMVP ) );
-        glUniformMatrix4fv( mLocation, 1, GL_FALSE, value_ptr( model ) );
-
-        vec3 lightPosition = vec3( 1, 7, 5 );
-        glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
+        glUniformMatrix4fv( depthMVPLocation, 1, GL_FALSE, value_ptr( depthMVP ) );
 
         glEnableVertexAttribArray( 0 );
         glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
@@ -435,8 +434,6 @@ public:
         glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
 
         glDisableVertexAttribArray( 0 );
-        glDisableVertexAttribArray( 1 );
-        glDisableVertexAttribArray( 2 );
     }
 
 private:
@@ -450,9 +447,7 @@ private:
     vector<vec3> indexed_bitangents;
     GLuint vertexbuffer{ 0 };
     GLuint elementbuffer{ 0 };
-    GLuint mvpLocation{ 0 };
-    GLuint mLocation{ 0 };
-    GLuint lightPositionLocation{ 0 };
+    GLuint depthMVPLocation{ 0 };
 };
 
 int main( void )
