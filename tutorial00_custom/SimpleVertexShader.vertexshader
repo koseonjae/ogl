@@ -10,6 +10,7 @@ uniform mat4 MVP;
 uniform mat4 M;
 uniform mat4 V;
 uniform mat4 MV;
+uniform mat4 DepthBiasMVP;
 uniform vec3 lightPosition;
 
 out vec2 uv;
@@ -17,10 +18,13 @@ out float distance;
 out vec3 normalDirection_cameraspace;
 out vec3 eyeDirection_cameraspace;
 out vec3 lightDirection_cameraspace;
+out vec4 ShadowCoord;
 
 void main( void )
 {
     gl_Position = MVP * vec4(vertexPosition, 1);
+
+    ShadowCoord = DepthBiasMVP * vec4(vertexPosition,1);
 
     uv = vertexUV;
 

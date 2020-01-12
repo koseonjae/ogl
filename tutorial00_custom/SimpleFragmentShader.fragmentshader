@@ -5,6 +5,7 @@ layout(location = 0) out vec4 fragColor;
 uniform sampler2D diffuseSampler;
 uniform sampler2D specularSampler;
 uniform sampler2D normalSampler;
+uniform sampler2DShadow shadowSampler;
 
 in vec2 uv;
 
@@ -12,6 +13,7 @@ in float distance;
 in vec3 normalDirection_cameraspace;
 in vec3 lightDirection_cameraspace;
 in vec3 eyeDirection_cameraspace;
+in vec4 ShadowCoord;
 
 void main( void )
 {
@@ -30,8 +32,11 @@ void main( void )
     float cosTheta = clamp(dot(n, l), 0, 1);
     float cosAlpha = clamp(dot(v, r), 0, 1);
 
+    float visibility = texture( shadowSampler, vec3(ShadowCoord.xy, (ShadowCoord.z)/ShadowCoord.w) );
+
     fragColor.rgb = materialAmbient +
-                    lightPower * lightColor * materialDiffuse * cosTheta / (distance * distance) +
-                    lightPower * lightColor * materialSpecular * pow(cosAlpha, 5) / (distance * distance);
+                    visibility * lightPower * lightColor * materialDiffuse * cosTheta / (distance * distance) +
+                    visibility * lightPower * lightColor * materialSpecular * pow(cosAlpha, 5) / (distance * distance);
+
     fragColor.a = 1;
 }

@@ -69,6 +69,7 @@ public:
         specularTextureId = loadDDS( "../tutorial13_normal_mapping/specular.DDS" );
         normalTextureId = loadBMP_custom( "../tutorial13_normal_mapping/normal.bmp" );
 
+        shadowTextureLocation = glGetUniformLocation( programID, "shadowSampler" );
         diffuseTextureLocation = glGetUniformLocation( programID, "diffuseSampler" );
         specularTextureLocation = glGetUniformLocation( programID, "specularSampler" );
         normalTextureLocation = glGetUniformLocation( programID, "normalSampler" );
@@ -86,7 +87,7 @@ public:
         // todo: delete resources
     }
 
-    void render( void )
+    void render( int shadowTextureId )
     {
         // -----------
         // pipeline
@@ -125,6 +126,14 @@ public:
         mat4 projection = getProjectionMatrix();
         mat4 mvp = projection * view * model;
         mat4 mv = view * model;
+
+        mat4 shadowModel = mat4( 1.f );
+        mat4 shadowView = lookAt( vec3( 1, 7, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
+        mat4 shadowProjection = mat4( 1.0 );
+        glm::mat4 biasMatrix( 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0 );
+        mat4 depthBiasMVP = biasMatrix * projection * view * model;
+
+        glUniformMatrix4fv( depthBiasLocation, 1, GL_FALSE, value_ptr( depthBiasMVP ) );
         glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, value_ptr( mvp ) );
         glUniformMatrix4fv( mLocation, 1, GL_FALSE, value_ptr( model ) );
         glUniformMatrix4fv( vLocation, 1, GL_FALSE, value_ptr( view ) );
@@ -181,9 +190,11 @@ private:
     GLuint diffuseTextureId{ 0 };
     GLuint specularTextureId{ 0 };
     GLuint normalTextureId{ 0 };
+    GLuint shadowTextureLocation{ 0 };
     GLuint diffuseTextureLocation{ 0 };
     GLuint specularTextureLocation{ 0 };
     GLuint normalTextureLocation{ 0 };
+    GLuint depthBiasLocation{ 0 };
     GLuint mvpLocation{ 0 };
     GLuint mLocation{ 0 };
     GLuint vLocation{ 0 };
@@ -347,6 +358,101 @@ private:
 
 class ShadowNode final
 {
+public:
+    void initialize( int width, int height )
+    {
+        programID = LoadShaders( "SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader", "../tutorial00_custom/" );
+
+        glGenVertexArrays( 1, &vertexarray );
+        glBindVertexArray( vertexarray );
+
+        vector<vec3> vertices;
+        vector<vec2> uvs;
+        vector<vec3> normals;
+        vector<vec3> tangents;
+        vector<vec3> bitangents;
+        loadOBJ( "../tutorial16_shadowmaps/room.obj", vertices, uvs, normals );
+        computeTangentBasis( vertices, uvs, normals, tangents, bitangents );
+        indexVBO_TBN( vertices, uvs, normals, tangents, bitangents, indices, indexed_vertices, indexed_uvs, indexed_normals, indexed_tangents, indexed_bitangents );
+
+        glGenBuffers( 1, &vertexbuffer );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glBufferData( GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof( vec3 ), indexed_vertices.data(), GL_STATIC_DRAW );
+
+        glGenBuffers( 1, &elementbuffer );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, elementbuffer );
+        glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof( unsigned short ), indices.data(), GL_STATIC_DRAW );
+
+        mvpLocation = glGetUniformLocation( programID, "MVP" );
+        mLocation = glGetUniformLocation( programID, "M" );
+
+        lightPositionLocation = glGetUniformLocation( programID, "lightPosition" );
+    }
+
+    void release( void )
+    {
+    }
+
+    void render( void )
+    {
+        // -----------
+        // pipeline
+        // -----------
+
+        glUseProgram( programID );
+
+        glCullFace( GL_BACK ); // 레스터라이저의 뒷면제거 설정
+        glFrontFace( GL_CCW ); // counter clock wise를 front face로 설정
+
+        glEnable( GL_DEPTH_TEST ); // 출력 병합기의 z 버퍼링 활성화
+        glDepthFunc( GL_LESS ); // z값이 작은 (더 앞에 있는걸) 선택하도록 함
+
+        glEnable( GL_BLEND ); // 출력 병합기의 알파 블렌딩 활성화
+        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); // 현재 프래그먼트에 a값을 곱하고, 컬러버퍼에 1-a를 곱해서 둘을 더한다. result = a * fragColor + (1-a) * frameBufferColor
+
+        // ---------
+        // draw call
+        // ---------
+
+        computeMatricesFromInputs( g_width, g_height );
+        mat4 model = mat4( 1.f );
+        mat4 view = lookAt( vec3( 1, 7, 5 ), vec3( 0, 0, 0 ), vec3( 0, 1, 0 ) );
+        mat4 projection = mat4( 1.0 );
+        glm::mat4 biasMatrix( 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0 );
+        mat4 depthMVP = projection * view * model;
+        mat4 depthBiasMVP = biasMatrix * projection * view * model;
+        glUniformMatrix4fv( mvpLocation, 1, GL_FALSE, value_ptr( depthMVP ) );
+        glUniformMatrix4fv( mLocation, 1, GL_FALSE, value_ptr( model ) );
+
+        vec3 lightPosition = vec3( 1, 7, 5 );
+        glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
+
+        glEnableVertexAttribArray( 0 );
+        glBindBuffer( GL_ARRAY_BUFFER, vertexbuffer );
+        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+        glBindVertexArray( elementbuffer );
+        glDrawElements( GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, nullptr );
+
+        glDisableVertexAttribArray( 0 );
+        glDisableVertexAttribArray( 1 );
+        glDisableVertexAttribArray( 2 );
+    }
+
+private:
+    GLuint programID{ 0 };
+    GLuint vertexarray{ 0 };
+    vector<unsigned short> indices;
+    vector<vec3> indexed_vertices;
+    vector<vec2> indexed_uvs;
+    vector<vec3> indexed_normals;
+    vector<vec3> indexed_tangents;
+    vector<vec3> indexed_bitangents;
+    GLuint vertexbuffer{ 0 };
+    GLuint elementbuffer{ 0 };
+    GLuint mvpLocation{ 0 };
+    GLuint mLocation{ 0 };
+    GLuint lightPositionLocation{ 0 };
 };
 
 int main( void )
@@ -419,11 +525,35 @@ int main( void )
     // shadow framebuffer
     // ------------------
 
+    GLuint shadowFramebufferId;
+    glGenFramebuffers( 1, &shadowFramebufferId );
+    glBindFramebuffer( GL_FRAMEBUFFER, shadowFramebufferId );
 
+    GLuint shadowTextureId;
+    glGenTextures( 1, &shadowTextureId );
+    glBindTexture( GL_TEXTURE_2D, shadowTextureId );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
+
+    glFramebufferTexture( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowTextureId, 0 );
+    glDrawBuffer( GL_NONE );
+
+    if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
+    {
+        assert( false );
+    }
 
     // ----
     // node
     // ----
+
+    ShadowNode shadowNode;
+    shadowNode.initialize( windowWidth, windowHeight );
 
     SuzzaneNode suzzaneNode;
     suzzaneNode.initialize( windowWidth, windowHeight );
@@ -440,7 +570,10 @@ int main( void )
         // shadow
         // ------
 
-
+        glBindFramebuffer( GL_FRAMEBUFFER, shadowFramebufferId );
+        glViewport( 0, 0, windowWidth, windowHeight );
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+        shadowNode.render();
 
         // -------------
         // suzzane
@@ -449,7 +582,7 @@ int main( void )
         glBindFramebuffer( GL_FRAMEBUFFER, framebufferId );
         glViewport( 0, 0, windowWidth, windowHeight ); // 레스터라이저의 뷰포트 변환
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
-        suzzaneNode.render();
+        suzzaneNode.render( shadowTextureId );
         textNode.render( to_string( glfwGetTime() ), 10, 700, 60 );
 
         // ------
