@@ -15,7 +15,7 @@
 using namespace std;
 using namespace glm;
 
-GLFWwindow *window{ nullptr };
+GLFWwindow* window{ nullptr };
 
 int g_width{ 1024 }, g_height{ 768 };
 
@@ -347,15 +347,6 @@ private:
 
 class ShadowNode final
 {
-    // todo
-    // 카메라의 eye position 을 light position으로 한다.
-    // frame buffer를 만들고 texture를 32R 타입(?) 으로 만든다.
-    // 정점과 lightPosition의 거리를 나타내는 벡터를 normalize 하여 0~1 사이의 값으로 frag.r 에 세팅해준다.
-    // 그러면 framebuffer에 바인딩 되어있던 texture는 shadow texture가 된다.
-    // 이 texture를 simbleVertexShader의 uniform으로 넘겨준다.
-    // 그러면 fragment shader에서 현재 depth와 smapling된 depth를 비교한다.
-    // 현재 depth가 sampling된 depth보다 작거나 같으면 diffuse, specular도 더해주고, 크면 그림자속에 있다는 뜻이므로 ambient만 세팅해준다.
-    // 빛의 위치에 대해서 조사 필요
 };
 
 int main( void )
@@ -392,6 +383,10 @@ int main( void )
 
     glClearColor( 0, 0.4, 0, 0 );
 
+    // --------------------
+    // suzzane frame buffer
+    // --------------------
+
     GLuint framebufferId;
     glGenFramebuffers( 1, &framebufferId );
     glBindFramebuffer( GL_FRAMEBUFFER, framebufferId );
@@ -420,6 +415,16 @@ int main( void )
         assert( false );
     }
 
+    // ------------------
+    // shadow framebuffer
+    // ------------------
+
+
+
+    // ----
+    // node
+    // ----
+
     SuzzaneNode suzzaneNode;
     suzzaneNode.initialize( windowWidth, windowHeight );
 
@@ -431,34 +436,29 @@ int main( void )
 
     do
     {
+        // ------
+        // shadow
+        // ------
+
+
+
         // -------------
-        // render target
+        // suzzane
         // -------------
 
         glBindFramebuffer( GL_FRAMEBUFFER, framebufferId );
         glViewport( 0, 0, windowWidth, windowHeight ); // 레스터라이저의 뷰포트 변환
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
-
-        // ------
-        // render
-        // ------
-
         suzzaneNode.render();
-
         textNode.render( to_string( glfwGetTime() ), 10, 700, 60 );
 
-        // -------------
-        // render target
-        // -------------
+        // ------
+        // screen
+        // ------
 
         glBindFramebuffer( GL_FRAMEBUFFER, 0 );
         glViewport( 0, 0, windowWidth, windowHeight );
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); // 현재 바인딩된 프레임버퍼의 컬러, 뎁스, 스텐실 버퍼 초기화
-
-        // ------
-        // render
-        // ------
-
         wooblyNode.render( framebufferTextureId );
 
         glfwSwapBuffers( window );
