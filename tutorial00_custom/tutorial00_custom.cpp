@@ -130,7 +130,7 @@ public:
         glUniformMatrix4fv( vLocation, 1, GL_FALSE, value_ptr( view ) );
         glUniformMatrix4fv( mvLocation, 1, GL_FALSE, value_ptr( mv ) );
 
-        vec3 lightPosition = vec3( 0.5, 2, 2 );
+        vec3 lightPosition = vec3( 1, 7, 5 );
         glUniform3f( lightPositionLocation, lightPosition.x, lightPosition.y, lightPosition.z );
 
         glEnableVertexAttribArray( 0 );
