@@ -34,9 +34,9 @@ void main( void )
 
     float visibility = texture( shadowSampler, vec3(ShadowCoord.xy, (ShadowCoord.z)/ShadowCoord.w) );
 
-    fragColor.rgb = materialAmbient +
-                    visibility * lightPower * lightColor * materialDiffuse * cosTheta / (distance * distance) +
-                    visibility * lightPower * lightColor * materialSpecular * pow(cosAlpha, 5) / (distance * distance);
-
-    fragColor.a = 1;
+    vec3 color = materialAmbient +
+                 visibility * lightPower * lightColor * materialDiffuse * cosTheta / (distance * distance) +
+                 visibility * lightPower * lightColor * materialSpecular * pow(cosAlpha, 5) / (distance * distance);
+    float Gamma = 2.2;
+    fragColor = vec4(pow(color, vec3(1.0/Gamma)), 1.0);
 }
