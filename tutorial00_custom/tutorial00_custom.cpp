@@ -480,6 +480,15 @@ int main( void )
         assert( false );
     }
 
+    GLint bufs, samples;
+    glGetIntegerv( GL_SAMPLE_BUFFERS, &bufs );
+    glGetIntegerv( GL_SAMPLES, &samples );
+    GLboolean multisampleEnabled[1];
+    glGetBooleanv( GL_MULTISAMPLE, multisampleEnabled );
+    printf( "msaa buffers: %d, samples: %d enabled: %s\n", bufs, samples, multisampleEnabled[0] != 0 ? "true" : "false" );
+    // note: bufs 는 1, samples는 max가 8까지로 설정되어있음
+    // note: mulisample은 default로 true가 되어있음
+
     // GL
 
     glClearColor( 0, 0.4, 0, 0 );
